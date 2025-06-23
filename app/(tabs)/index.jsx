@@ -26,7 +26,7 @@ const HomeScreen = () => {
     useEffect(() => {
         const getDoctors = async () => {
             try {
-                const res = await axios.get('http://192.168.43.153:3000/api/users/all');
+                const res = await axios.get('http://192.168.43.153:3000/api/users/doctors');
                 const data = res.data
                 setDoctors(data);
             } catch (error) {
