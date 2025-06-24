@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image, StatusBar } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Replace useRouter with useNavigation
+import { useRouter } from 'expo-router';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import useTheme from '../../hooks/useTheme'; // Import the useTheme hook
 import { AuthContext } from '../../context/AuthContext';
@@ -16,7 +16,7 @@ const categories = [
 ];
 
 const HomeScreen = () => {
-    const navigation = useNavigation(); // Replace useRouter with useNavigation
+    const router = useRouter();
     const { themeStyles, theme } = useTheme(); // Destructure themeStyles and theme from useTheme
     const { userDetails } = useContext(AuthContext);
     const [doctors, setDoctors] = useState([]);
@@ -45,22 +45,22 @@ const HomeScreen = () => {
 
     // Navigate to the login screen
     const handleProfile = () => {
-        navigation.navigate('UserProfile'); // Navigate to the UserProfile screen
+        router.push('UserProfile'); // Navigate to the UserProfile screen
     };
 
     // Navigate to the booking screen (assuming you have a booking screen set up)
     const handleDoctorProfile = (doctorId) => {
-        navigation.navigate('screens/DoctorScreen', { doctorId }); // Navigate to the DoctorScreen
+        router.push('screens/DoctorScreen', { doctorId }); // Navigate to the DoctorScreen
     };
 
     // Navigate to the search screen
     const handleSearch = () => {
-        navigation.navigate('screens/DoctorScreen'); // Navigate to the DoctorScreen
+        router.push('screens/DoctorScreen'); // Navigate to the DoctorScreen
     }
 
     // Navigate to the menu screen
     const handleNotification = () => {
-        navigation.navigate('screens/Notifications'); // Navigate to the Notifications screen
+        router.push('screens/Notifications'); // Navigate to the Notifications screen
     }
 
     return (
