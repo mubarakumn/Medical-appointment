@@ -39,7 +39,7 @@ const AdditionalDetails = () => {
         // console.log('User Details:', userDetails);
 
         try {
-            const response = await axios.post('http://192.168.43.153:3000/api/users/register', {
+            const response = await axios.post('https://medicalapp-backend.vercel.app/api/users/register', {
               ...userDetails
             });
           

@@ -23,10 +23,11 @@ const HomeScreen = () => {
 
 
     // get doctors 
+    // http://192.168.43.153:3000
     useEffect(() => {
         const getDoctors = async () => {
             try {
-                const res = await axios.get('http://192.168.43.153:3000/api/users/doctors');
+                const res = await axios.get('https://medicalapp-backend.vercel.app/api/users/doctors');
                 const data = res.data
                 setDoctors(data);
             } catch (error) {

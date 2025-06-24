@@ -18,7 +18,7 @@ const AuthProvider = ({ children })=>{
         const check_auth = async ()=>{
             try{
                 const token = await AsyncStorage.getItem('token');
-                const checkAuth = await axios.get('http://192.168.43.153:3000/api/checkauth', {
+                const checkAuth = await axios.get('https://medicalapp-backend.vercel.app/api/checkauth', {
                     headers:{ Authorization: `Bearer ${token}`}
                 });
                 // console.log("check authdata", checkAuth.data);
