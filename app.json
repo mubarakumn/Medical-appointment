@@ -7,7 +7,6 @@
     "icon": "./assets/images/bg-logocalender.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true
     },
@@ -33,7 +32,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
@@ -49,6 +49,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/a401604c-94ea-4b21-bf0c-0acb2120be66"
-    }
+    },
+    "owner": "almubarak"
   }
 }

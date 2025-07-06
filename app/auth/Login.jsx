@@ -11,7 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { themeStyles, theme } = useTheme(); // Destructure themeStyles from useTheme
-  const { setUserDetails } = useContext(AuthContext);
+  const { login, setUserDetails } = useContext(AuthContext);
 
   const navigation = useRouter();
 
@@ -22,10 +22,7 @@ const Login = () => {
     }
   
     try {
-      const response = await axios.post('https://medicalapp-backend.vercel.app/api/users/login', {
-        email,
-        password,
-      });
+      const response = await login( email, password);
     
       if (response.status === 200) {
         // Check if the response data contains the expected structure
