@@ -11,53 +11,55 @@ const AuthProvider = ({ children }) => {
   const navigation = useRouter();
 
   // ✅ Called once on app load to check token
-  useEffect(() => {
-    const check_auth = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
+useEffect(() => {
+  let mounted = true;
+  const check_auth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return navigation.replace('/auth/Login');
 
-        const checkAuth = await axios.get(
-          'https://medical-appointment-backend-five.vercel.app/api/checkauth',
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/checkauth', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-        if (checkAuth.status === 200) {
-        const role = checkAuth.data.userData.role;
-        setUserDetails(checkAuth.data.userData);
+      if (res.status === 200 && mounted) {
+        const role = res.data.userData.role;
+        setUserDetails(res.data.userData);
         setIsAuth(true);
-
-        // Role-based navigation
-        if (role === 'admin') navigation.replace('/admin/Dashboard');
-        else if (role === 'doctor') navigation.replace('/doctor/dashboard');
-        else navigation.replace('/'); // patient
-        }else {
-          navigation.replace('/auth/Login');
-        }
-      } catch (error) {
-        if (error.response?.status === 403) {
-          navigation.replace('/auth/Login');
-        } else {
-          console.error('Error checking authentication:', error);
-        }
+        setTimeout(() => {
+          if (role === 'admin') navigation.replace('/admin/Dashboard');
+          else if (role === 'doctor') navigation.replace('/doctor/dashboard');
+          else navigation.replace('/');
+        }, 0);
       }
-    };
+    } catch (error) {
+      navigation.replace('/auth/Login');
+    }
+  };
 
-    check_auth();
-  }, [isAuth]);
+  check_auth();
+  return () => { mounted = false; };
+}, []);
+
 
   // ✅ LOGIN
-  const login = async (email, password) => {
-    const res = await axios.post('https://medical-appointment-backend-five.vercel.app/api/users/login',
+ const login = async (email, password) => {
+  try {
+    const res = await axios.post(
+      'https://medical-appointment-backend-five.vercel.app/api/users/login',
       { email, password }
     );
 
     const { token, user } = res.data;
+
     await AsyncStorage.setItem('token', token);
     setUserDetails(user);
-    setIsAuth(true); // Triggers redirect
-  };
+    setIsAuth(true); // Triggers useEffect
+  } catch (err) {
+    console.error("Login Error:", err.response?.data || err.message);
+    throw err; 
+  }
+};
 
   // ✅ REGISTER
   const register = async (formData) => {
