@@ -13,10 +13,11 @@ const _layout = () => {
 
           {/* Main Tabs */}
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="doctor" options={{ headerShown: false }} />
 
           {/* Other Screens */}
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="screens/DoctorScreen" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/[doctorId]" options={{ headerShown: false }} />
           <Stack.Screen name="screens/BookAppointment" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Notifications" options={{ headerShown: false }} />
         </Stack> 

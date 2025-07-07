@@ -4,7 +4,9 @@ import { useRouter } from 'expo-router';
 import useTheme from '../../hooks/useTheme'; // Import the useTheme hook
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import { AuthContext } from '../../context/AuthContext'
+import { AuthContext } from '../../context/AuthContext';
+import { ActivityIndicator } from 'react-native';
+
 
 
 const Login = () => {
@@ -12,6 +14,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { themeStyles, theme } = useTheme(); // Destructure themeStyles from useTheme
   const { login, setUserDetails } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
+
 
   const navigation = useRouter();
 
@@ -20,53 +24,16 @@ const Login = () => {
       Alert.alert('Error', 'Please fill in both fields'); // Use Alert for user feedback
       return;
     }
-  
-    try {
-      const response = await login( email, password);
     
-      if (response.status === 200) {
-        // Check if the response data contains the expected structure
-        if (response.data) {
-          setUserDetails(response.data.patient);
-          await AsyncStorage.setItem('userDetail', JSON.stringify(response.data.patient)); 
-          await AsyncStorage.setItem('token', response.data.token); 
-          console.log("use data:", response.data.patient);
-          // Profile Completion Check
-          if(response.data.patient.profileStatus === 'notComplete'){
-            navigation.navigate('auth/AdditionalDetails')
-            return;
-          }
-        
-          // Navigate to the home screen after successful login
-          navigation.navigate('/'); 
-          return;
-
-        } else {
-          // If the response is 200 but the data structure is not as expected 
-          Alert.alert('Error', 'Unexpected response structure.'); 
-          return;
-        }
-      } else { 
-        Alert.alert('Error', response.data.message || 'Login failed'); // Provide feedback on failure
-        return; 
-      }
-    } catch (error) {
-      // Check if error.response exists
-      console.log(error);
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        if (error.response.status === 404) {
-          Alert.alert('Oops!', 'User not found');
-        } else if (error.response.status === 400) {
-          Alert.alert('Oops!', 'Invalid credentials');
-        } else {
-          Alert.alert('Error', error.response.data.message || 'An error occurred during login. Please try again.'); // User-friendly error message
-        }
-      } else {
-        // The request was made but no response was received
-        Alert.alert('Error', 'Network error. Please check your connection and try again.');
-      }
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (err) {
+      Alert.alert('Login failed', err?.response?.data?.message || 'Something went wrong');
+    }finally{
+      setLoading(false);
     }
+     
   };
 
   const handleSignup = () => {
@@ -94,8 +61,14 @@ const Login = () => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={[styles.button, { backgroundColor: themeStyles.text }]} onPress={handleLogin}>
-        <Text style={[styles.buttonText, { color: themeStyles.background }]}>Login</Text>
+      <TouchableOpacity disabled={loading} style={[styles.button, { backgroundColor: themeStyles.text }]} onPress={handleLogin}>
+        <Text style={[styles.buttonText, { color: themeStyles.background }]}>
+           {loading ? (
+              <ActivityIndicator color={themeStyles.background} />
+            ) : (
+              <Text style={[styles.buttonText, { color: themeStyles.background }]}>Login</Text>
+            )}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={handleSignup}>
         <Text style={[styles.link, { color: themeStyles.primary }]}>Don't have an account? Sign up</Text>
@@ -139,6 +112,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 20,
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    flexDirection: "row",
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 999,
+  },
+
 });
 
 export default Login;

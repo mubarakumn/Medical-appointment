@@ -9,7 +9,7 @@ import TopBar from '../../components/TopBar'
 
 const UserProfile = () => {
   const { themeStyles } = useTheme()
-  const { Logout, userDetails } = useContext(AuthContext);
+  const { logout, userDetails } = useContext(AuthContext);
   const navigation = useRouter()
 
   const handleGoback = () => {
@@ -59,7 +59,7 @@ const UserProfile = () => {
           {/* icon */}
           <FontAwesome name="angle-right" size={24} color={themeStyles.text} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={() => Logout()}>
+        <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={() => logout()}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {/* icon */}
             <SimpleLineIcons name="logout" size={24} color={themeStyles.text} />

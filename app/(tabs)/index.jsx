@@ -16,18 +16,18 @@ const categories = [
 ];
 
 const HomeScreen = () => {
-    const router = useRouter();
     const { themeStyles, theme } = useTheme(); // Destructure themeStyles and theme from useTheme
     const { userDetails } = useContext(AuthContext);
     const [doctors, setDoctors] = useState([]);
-
+    
+    const router = useRouter();
 
     // get doctors 
     // http://192.168.43.153:3000
     useEffect(() => {
         const getDoctors = async () => {
             try {
-                const res = await axios.get('https://medicalapp-backend.vercel.app/api/users/doctors');
+                const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/users/doctors');
                 const data = res.data
                 setDoctors(data);
             } catch (error) {
@@ -37,6 +37,7 @@ const HomeScreen = () => {
         getDoctors();
 
         return () => {
+            
             setDoctors([]);
         }
     }, [])
@@ -50,7 +51,8 @@ const HomeScreen = () => {
 
     // Navigate to the booking screen (assuming you have a booking screen set up)
     const handleDoctorProfile = (doctorId) => {
-        router.push('screens/DoctorScreen', { doctorId }); // Navigate to the DoctorScreen
+        console.log(doctorId);
+        router.push(`/screens/${doctorId}`);
     };
 
     // Navigate to the search screen

@@ -30,7 +30,7 @@ const AuthProvider = ({ children }) => {
 
         // Role-based navigation
         if (role === 'admin') navigation.replace('/admin/Dashboard');
-        else if (role === 'doctor') navigation.replace('/doctor/Dashboard');
+        else if (role === 'doctor') navigation.replace('/doctor/dashboard');
         else navigation.replace('/'); // patient
         }else {
           navigation.replace('/auth/Login');
@@ -49,8 +49,7 @@ const AuthProvider = ({ children }) => {
 
   // ✅ LOGIN
   const login = async (email, password) => {
-    const res = await axios.post(
-      'https://medical-appointment-backend-five.vercel.app/api/user/login',
+    const res = await axios.post('https://medical-appointment-backend-five.vercel.app/api/users/login',
       { email, password }
     );
 
@@ -63,7 +62,7 @@ const AuthProvider = ({ children }) => {
   // ✅ REGISTER
   const register = async (formData) => {
     const res = await axios.post(
-      'https://medical-appointment-backend-five.vercel.app/api/user/register',
+      'https://medical-appointment-backend-five.vercel.app/api/users/register',
       formData
     );
 

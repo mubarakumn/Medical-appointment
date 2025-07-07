@@ -32,7 +32,7 @@ export default function DoctorScreen() {
       const fetchDoctor = async (doctorId) => {
         try {
           // setLoading(true);
-          const response = await axios.get(`https://medicalapp-backend.vercel.app/api/users/${doctorId}`);
+          const response = await axios.get(`https://medical-appointment-backend-five.vercel.app/api/users/${doctorId}`);
           if (response.status === 200) {
             setDoctorDetails(response.data);
           } else {
