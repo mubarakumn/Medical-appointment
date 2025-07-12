@@ -62,13 +62,9 @@ const Login = () => {
         secureTextEntry
       />
       <TouchableOpacity disabled={loading} style={[styles.button, { backgroundColor: themeStyles.text }]} onPress={handleLogin}>
-        <Text style={[styles.buttonText, { color: themeStyles.background }]}>
-           {loading ? (
-              <ActivityIndicator color={themeStyles.background} />
-            ) : (
-              <Text style={[styles.buttonText, { color: themeStyles.background }]}>Login</Text>
-            )}
-        </Text>
+        {loading
+          ? <ActivityIndicator color={themeStyles.background} />
+          : <Text style={[styles.buttonText, { color: themeStyles.background }]}>Login</Text>}
       </TouchableOpacity>
       <TouchableOpacity onPress={handleSignup}>
         <Text style={[styles.link, { color: themeStyles.primary }]}>Don't have an account? Sign up</Text>

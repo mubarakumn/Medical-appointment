@@ -43,7 +43,7 @@ useEffect(() => {
 
 
   // ✅ LOGIN
- const login = async (email, password) => {
+const login = async (email, password) => {
   try {
     const res = await axios.post(
       'https://medical-appointment-backend-five.vercel.app/api/users/login',
@@ -54,12 +54,20 @@ useEffect(() => {
 
     await AsyncStorage.setItem('token', token);
     setUserDetails(user);
-    setIsAuth(true); // Triggers useEffect
+    setIsAuth(true);
+
+    // ✅ Add this to redirect immediately after login
+    const role = user.role;
+    if (role === 'admin') navigation.replace('/admin/Dashboard');
+    else if (role === 'doctor') navigation.replace('/doctor/dashboard');
+    else navigation.replace('/');
   } catch (err) {
     console.error("Login Error:", err.response?.data || err.message);
-    throw err; 
+    throw err;
   }
 };
+
+
 
   // ✅ REGISTER
   const register = async (formData) => {
@@ -72,6 +80,12 @@ useEffect(() => {
     await AsyncStorage.setItem('token', token);
     setUserDetails(user);
     setIsAuth(true);
+    
+    // ✅ Redirect based on role
+    const role = user.role;
+    if (role === 'admin') navigation.replace('/admin/Dashboard');
+    else if (role === 'doctor') navigation.replace('/doctor/dashboard');
+    else navigation.replace('/');
   };
 
   // ✅ LOGOUT

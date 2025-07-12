@@ -39,7 +39,7 @@ const DoctorDashboard = () => {
 
     // Navigate to the login screen
     const handleProfile = () => {
-        router.push('profile'); // Navigate to the UserProfile screen
+        router.push('/profile'); // Navigate to the UserProfile screen
     };
 
       // Navigate to the menu screen

@@ -1,168 +1,192 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
-import DatePicker from 'react-native-date-picker';
-import MyButton from '../../components/MyButton';
-import useTheme from '../../hooks/useTheme';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { AuthContext } from '../../context/AuthContext';
+import useTheme from '../../hooks/useTheme';
 
-const SignupSteps = () => {
-  const { themeStyles } = useTheme();
-  const router = useRouter();
+const Signup = () => {
   const { register } = useContext(AuthContext);
+  const router = useRouter();
+  const { themeStyles, theme } = useTheme();
 
-  const [step, setStep] = useState(1);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [gender, setGender] = useState('');
-  const [address, setAddress] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState(new Date());
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [role, setRole] = useState('patient');
-  const [specialization, setSpecialization] = useState('');
-  const [experience, setExperience] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    dateOfBirth: new Date(),
+    gender: 'male',
+    address: '',
+    role: 'patient',
+    specialization: '',
+    experience: ''
+  });
 
-  const nextStep = () => {
-    if (step === 1 && (!email || !password || password !== confirmPassword)) {
-      return Alert.alert('Error', 'Please enter valid email & matching passwords.');
-    }
-    if (step === 2 && (!name || !phone || !gender || !address)) {
-      return Alert.alert('Error', 'Please fill all personal details.');
-    }
-    if (step === 4 && role === 'doctor' && (!specialization || !experience)) {
-      return Alert.alert('Error', 'Please fill in your specialization and experience.');
-    }
-    setStep(prev => prev + 1);
-  };
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   const handleSignup = async () => {
-    const payload = {
-      name,
-      email,
-      password,
-      phone,
-      gender,
-      address,
-      dateOfBirth: dateOfBirth.toISOString(),
-      role,
-      ...(role === 'doctor' && { specialization, experience: Number(experience) })
-    };
+    const {
+      name, email, phone, password, dateOfBirth,
+      gender, address, role, specialization, experience
+    } = form;
 
-    try {
-      await register(payload);
-    } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || 'Signup failed');
+    if (!name || !email || !phone || !password || !dateOfBirth || !gender || !address) {
+      return Alert.alert('Error', 'Please fill all required fields');
     }
-  };
 
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <>
-            <Text style={[styles.title, { color: themeStyles.text }]}>Step 1: Account</Text>
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Email" placeholderTextColor={themeStyles.icon} value={email} onChangeText={setEmail} autoCapitalize="none" />
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Password" placeholderTextColor={themeStyles.icon} value={password} onChangeText={setPassword} secureTextEntry />
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Confirm Password" placeholderTextColor={themeStyles.icon} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
-          </>
-        );
+    if (role === 'doctor' && (!specialization || !experience)) {
+      return Alert.alert('Error', 'Doctor fields required');
+    }
 
-      case 2:
-        return (
-          <>
-            <Text style={[styles.title, { color: themeStyles.text }]}>Step 2: Personal Info</Text>
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Full Name" placeholderTextColor={themeStyles.icon} value={name} onChangeText={setName} />
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Phone" placeholderTextColor={themeStyles.icon} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Gender" placeholderTextColor={themeStyles.icon} value={gender} onChangeText={setGender} />
-            <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Address" placeholderTextColor={themeStyles.icon} value={address} onChangeText={setAddress} multiline />
-            <MyButton title={dateOfBirth.toDateString()} onPress={() => setIsDatePickerOpen(true)} />
-            <DatePicker modal mode="date" open={isDatePickerOpen} date={dateOfBirth} onConfirm={(date) => { setIsDatePickerOpen(false); setDateOfBirth(date); }} onCancel={() => setIsDatePickerOpen(false)} />
-          </>
-        );
+    setLoading(true);
+    try {
+      const payload = {
+        ...form,
+        dateOfBirth: new Date(dateOfBirth).toISOString(),
+      };
+      if (role !== 'doctor') {
+        delete payload.specialization;
+        delete payload.experience;
+      }
 
-      case 3:
-        return (
-          <>
-            <Text style={[styles.title, { color: themeStyles.text }]}>Step 3: Choose Role</Text>
-            <View style={styles.roleContainer}>
-              <MyButton title="Patient" onPress={() => setRole('patient')} style={[styles.roleBtn, role === 'patient' && styles.selected]} />
-              <MyButton title="Doctor" onPress={() => setRole('doctor')} style={[styles.roleBtn, role === 'doctor' && styles.selected]} />
-            </View>
-          </>
-        );
-
-      case 4:
-        if (role === 'doctor') {
-          return (
-            <>
-              <Text style={[styles.title, { color: themeStyles.text }]}>Step 4: Doctor Info</Text>
-              <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Specialization" placeholderTextColor={themeStyles.icon} value={specialization} onChangeText={setSpecialization} />
-              <TextInput style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]} placeholder="Experience (years)" placeholderTextColor={themeStyles.icon} value={experience} onChangeText={setExperience} keyboardType="numeric" />
-            </>
-          );
-        } else {
-          handleSignup(); // For patient, auto submit here
-        }
-        break;
-
-      default:
-        return null;
+      await register(payload);
+    } catch (error) {
+      Alert.alert('Registration failed', error?.response?.data?.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: themeStyles.background }]}>
-      <View style={styles.centered}>
-        {renderStep()}
-        {(step < 4 || (step === 4 && role === 'doctor')) && <MyButton title="Next" onPress={nextStep} />}
-        {step === 4 && role !== 'doctor' && <MyButton title="Finish Signup" onPress={handleSignup} />}
+    <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <Text style={[styles.title, { color: themeStyles.text }]}>Sign Up</Text>
+
+      {/* Input Fields */}
+      {['name', 'email', 'phone', 'password', 'address'].map(field => (
+        <TextInput
+          key={field}
+          placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+          value={form[field]}
+          onChangeText={(value) => handleChange(field, value)}
+          placeholderTextColor={themeStyles.icon}
+          secureTextEntry={field === 'password'}
+          keyboardType={field === 'phone' ? 'phone-pad' : 'default'}
+          style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]}
+        />
+      ))}
+
+      {/* Gender */}
+      <View style={styles.genderContainer}>
+        {['male', 'female', 'other'].map(option => (
+          <TouchableOpacity
+            key={option}
+            onPress={() => handleChange('gender', option)}
+            style={[
+              styles.genderOption,
+              form.gender === option && { backgroundColor: themeStyles.primary }
+            ]}
+          >
+            <Text style={{ color: form.gender === option ? 'white' : themeStyles.text }}>
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
-    </ScrollView>
+
+      {/* Date Picker */}
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateBtn}>
+        <Text style={{ color: themeStyles.text }}>
+          Date of Birth: {new Date(form.dateOfBirth).toLocaleDateString()}
+        </Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          value={new Date(form.dateOfBirth)}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) handleChange('dateOfBirth', selectedDate);
+          }}
+        />
+      )}
+
+      {/* Role Picker */}
+      <View style={styles.roleContainer}>
+        {['patient', 'doctor'].map(role => (
+          <TouchableOpacity
+            key={role}
+            onPress={() => handleChange('role', role)}
+            style={[
+              styles.genderOption,
+              form.role === role && { backgroundColor: themeStyles.primary }
+            ]}
+          >
+            <Text style={{ color: form.role === role ? 'white' : themeStyles.text }}>
+              {role}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Doctor Fields */}
+      {form.role === 'doctor' && (
+        <>
+          <TextInput
+            placeholder="Specialization"
+            value={form.specialization}
+            onChangeText={value => handleChange('specialization', value)}
+            placeholderTextColor={themeStyles.icon}
+            style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]}
+          />
+          <TextInput
+            placeholder="Experience (years)"
+            value={form.experience}
+            onChangeText={value => handleChange('experience', value)}
+            placeholderTextColor={themeStyles.icon}
+            keyboardType="numeric"
+            style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]}
+          />
+        </>
+      )}
+
+      {/* Submit */}
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: themeStyles.text }]}
+        onPress={handleSignup}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={themeStyles.background} />
+        ) : (
+          <Text style={[styles.buttonText, { color: themeStyles.background }]}>Register</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.replace('/auth/Login')}>
+        <Text style={[styles.link, { color: themeStyles.primary }]}>
+          Already have an account? Login
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    width: '100%',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 15,
-    marginTop: 20,
-  },
-  roleBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  selected: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
-  },
+  container: { flex: 1, padding: 20, justifyContent: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 30, alignSelf: 'center' },
+  input: { height: 50, borderRadius: 10, paddingHorizontal: 15, marginBottom: 15 },
+  button: { height: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  buttonText: { fontSize: 16, fontWeight: 'bold' },
+  link: { fontSize: 16, marginTop: 20, textAlign: 'center' },
+  genderContainer: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10 },
+  roleContainer: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 },
+  genderOption: { padding: 10, borderRadius: 10 },
+  dateBtn: { marginVertical: 10, padding: 12, backgroundColor: '#ccc', borderRadius: 10 },
 });
 
-export default SignupSteps;
+export default Signup;
