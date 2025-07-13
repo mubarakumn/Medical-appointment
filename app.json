@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/nobg-logocalender.jpg",
+        "foregroundImage": "./assets/images/nobg-logocalender.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.almubarak.MedicalAppointment"
@@ -27,7 +27,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/nobg-logocalender.png",
+          "image": "./assets/images/bg-logocalender.jpg",
           "imageWidth": 200,
           "borderRadius": 50,
           "resizeMode": "contain",

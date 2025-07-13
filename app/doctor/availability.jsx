@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { AuthContext } from '../../context/AuthContext';
 import useTheme from '../../hooks/useTheme';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,7 +33,7 @@ const durations = [
 const DoctorAvailabilityScreen = () => {
   const { themeStyles } = useTheme();
   const [availability, setAvailability] = useState([]);
-  const [adding, setAdding] = useState(false);
+  const [pickerVisible, setPickerVisible] = useState({});
   const [loading, setLoading] = useState(false);
 
   const addRule = () => {
@@ -56,24 +55,31 @@ const DoctorAvailabilityScreen = () => {
   };
 
   const handleSubmit = async () => {
+    if (!availability.length) {
+      Alert.alert('No rules', 'Please add at least one availability rule.');
+      return;
+    }
+
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-
       const payload = availability.map(rule => ({
         day: rule.day,
-        startTime: rule.startTime.toTimeString().slice(0, 5), // HH:MM
+        startTime: rule.startTime.toTimeString().slice(0, 5),
         endTime: rule.endTime.toTimeString().slice(0, 5),
         duration: rule.duration,
       }));
 
       await axios.put(
-        'http://192.168.43.153:3000/api/users/doctors/availability',
+        'https://medical-appointment-backend-five.vercel.app/api/users/doctors/availability',
         { availability: payload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert('Success', 'Availability updated and slots generated.');
+      Alert.alert(
+        'Success',
+        'Your availability has been updated. Slots will be generated for the next 14 days unless changed.'
+      );
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'Failed to update availability.');
@@ -84,64 +90,74 @@ const DoctorAvailabilityScreen = () => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: themeStyles.background }]}>
-      <Text style={[styles.title, { color: themeStyles.text }]}>Set Weekly Availability</Text>
+      <Text style={[styles.title, { color: themeStyles.text }]}>Set Your Weekly Availability</Text>
+      <Text style={[styles.note, { color: themeStyles.icon }]}>
+        Your availability will be applied to the next 14 days. You can come back anytime to update it.
+      </Text>
+
+      {availability.length === 0 && (
+        <Text style={[styles.emptyText, { color: themeStyles.icon }]}>
+          No availability rules added yet.
+        </Text>
+      )}
 
       {availability.map((rule, index) => (
         <View key={index} style={[styles.card, { backgroundColor: themeStyles.card }]}>
-          <Text style={{ color: themeStyles.text, fontWeight: 'bold' }}>Rule {index + 1}</Text>
+          <Text style={[styles.ruleTitle, { color: themeStyles.text }]}>
+            Rule {index + 1}
+          </Text>
 
+          <Text style={[styles.label, { color: themeStyles.text }]}>Day:</Text>
           <RNPickerSelect
             onValueChange={value => updateRule(index, 'day', value)}
             items={daysOfWeek}
             value={rule.day}
-            style={pickerStyle}
-            placeholder={{}}
+            style={pickerStyle(themeStyles)}
+            placeholder={{ label: 'Select Day', value: null }}
           />
 
+          <Text style={[styles.label, { color: themeStyles.text }]}>Start Time:</Text>
           <TouchableOpacity
-            onPress={() => setAdding({ ...adding, showStart: index })}
+            onPress={() => setPickerVisible({ index, type: 'start' })}
             style={styles.timeButton}
           >
-            <Text style={{ color: themeStyles.icon }}>Start: {rule.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text style={{ color: themeStyles.icon }}>
+              {rule.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
           </TouchableOpacity>
 
+          <Text style={[styles.label, { color: themeStyles.text }]}>End Time:</Text>
           <TouchableOpacity
-            onPress={() => setAdding({ ...adding, showEnd: index })}
+            onPress={() => setPickerVisible({ index, type: 'end' })}
             style={styles.timeButton}
           >
-            <Text style={{ color: themeStyles.icon }}>End: {rule.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text style={{ color: themeStyles.icon }}>
+              {rule.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
           </TouchableOpacity>
 
+          <Text style={[styles.label, { color: themeStyles.text }]}>Duration per Slot:</Text>
           <RNPickerSelect
             onValueChange={value => updateRule(index, 'duration', value)}
             items={durations}
             value={rule.duration}
-            style={pickerStyle}
-            placeholder={{}}
+            style={pickerStyle(themeStyles)}
+            placeholder={{ label: 'Select Duration', value: null }}
           />
 
-          {/* Show pickers dynamically */}
-          {adding?.showStart === index && (
+          {pickerVisible.index === index && (
             <DateTimePicker
               mode="time"
-              value={rule.startTime}
+              value={
+                pickerVisible.type === 'start' ? rule.startTime : rule.endTime
+              }
               is24Hour={true}
               display="default"
               onChange={(event, selectedTime) => {
-                updateRule(index, 'startTime', selectedTime || rule.startTime);
-                setAdding({});
-              }}
-            />
-          )}
-          {adding?.showEnd === index && (
-            <DateTimePicker
-              mode="time"
-              value={rule.endTime}
-              is24Hour={true}
-              display="default"
-              onChange={(event, selectedTime) => {
-                updateRule(index, 'endTime', selectedTime || rule.endTime);
-                setAdding({});
+                if (selectedTime) {
+                  updateRule(index, pickerVisible.type === 'start' ? 'startTime' : 'endTime', selectedTime);
+                }
+                setPickerVisible({});
               }}
             />
           )}
@@ -149,7 +165,7 @@ const DoctorAvailabilityScreen = () => {
       ))}
 
       <TouchableOpacity style={styles.addButton} onPress={addRule}>
-        <Text style={{ color: '#fff' }}>➕ Add Rule</Text>
+        <Text style={{ color: '#fff' }}>➕ Add Availability Rule</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -169,9 +185,23 @@ const DoctorAvailabilityScreen = () => {
 
 const styles = StyleSheet.create({
   container: { padding: 15 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  card: { padding: 15, borderRadius: 10, marginBottom: 20 },
-  timeButton: { paddingVertical: 10 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
+  note: { fontSize: 14, marginBottom: 15 },
+  card: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  ruleTitle: { fontSize: 16, marginBottom: 5, fontWeight: '600' },
+  label: { marginTop: 10, fontWeight: '500' },
+  timeButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    marginTop: 5,
+  },
   addButton: {
     backgroundColor: '#555',
     padding: 15,
@@ -184,25 +214,32 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+  emptyText: {
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginVertical: 10,
+  },
 });
 
-const pickerStyle = {
+const pickerStyle = (themeStyles) => ({
   inputIOS: {
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
-    marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
-    color: '#000',
+    borderColor: themeStyles.border,
+    color: themeStyles.text,
+    backgroundColor: themeStyles.input || '#fff',
+    marginBottom: 5,
   },
   inputAndroid: {
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
-    marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
-    color: '#000',
+    borderColor: themeStyles.border,
+    color: themeStyles.text,
+    backgroundColor: themeStyles.input || '#fff',
+    marginBottom: 5,
   },
-};
+});
 
 export default DoctorAvailabilityScreen;

@@ -1,13 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Calendar } from 'react-native-calendars';
+import useTheme from '../../hooks/useTheme';
+import TopBar from '../../components/TopBar';
 
 const BookAppointment = () => {
   const { doctorId } = useLocalSearchParams();
   const router = useRouter();
+  const { themeStyles } = useTheme();
 
   const [slotsByDate, setSlotsByDate] = useState({});
   const [selectedDate, setSelectedDate] = useState('');
@@ -33,7 +45,7 @@ const BookAppointment = () => {
       marked[date] = {
         marked: true,
         selected: date === selectedDate,
-        selectedColor: '#2196F3',
+        selectedColor: themeStyles.primary || '#2196F3',
       };
     });
     return marked;
@@ -41,7 +53,7 @@ const BookAppointment = () => {
 
   const handleBook = async () => {
     if (!selectedDate || !selectedTime || !reason.trim()) {
-      Alert.alert('Error', 'Please select date, time, and reason');
+      Alert.alert('Error', 'Please select date, time, and provide a reason');
       return;
     }
 
@@ -51,12 +63,14 @@ const BookAppointment = () => {
         `https://medical-appointment-backend-five.vercel.app/api/appointments/book`,
         {
           doctorId,
-          date: `${selectedDate}T${selectedTime}:00`, // ISO format
+          date: `${selectedDate}T${selectedTime}:00`,
           reason,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      Alert.alert('Success', 'Appointment booked', [{ text: 'OK', onPress: () => router.replace('/') }]);
+      Alert.alert('Success', 'Appointment booked', [
+        { text: 'OK', onPress: () => router.replace('/') },
+      ]);
     } catch (err) {
       Alert.alert('Error', err.response?.data?.message || 'Something went wrong');
     }
@@ -67,51 +81,93 @@ const BookAppointment = () => {
   }, [doctorId]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Book Appointment</Text>
+    <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <TopBar title="Book Appointment" />
+      <Text style={[styles.title, { color: themeStyles.text }]}>Choose a Date</Text>
 
-      {loading && <ActivityIndicator size="large" color="#2196F3" />}
+      {loading ? (
+        <ActivityIndicator size="large" color={themeStyles.primary} />
+      ) : (
+        <Calendar
+          markedDates={markAvailableDates()}
+          onDayPress={(day) => {
+            setSelectedDate(day.dateString);
+            setSelectedTime('');
+          }}
+          style={styles.calendar}
+          theme={{
+            backgroundColor: themeStyles.card,
+            calendarBackground: themeStyles.card,
+            dayTextColor: themeStyles.text,
+            monthTextColor: themeStyles.text,
+            arrowColor: themeStyles.primary,
+          }}
+        />
+      )}
 
-      <Calendar
-        markedDates={markAvailableDates()}
-        onDayPress={(day) => setSelectedDate(day.dateString)}
-        style={{ marginBottom: 20 }}
-      />
-
-      {selectedDate && slotsByDate[selectedDate] && (
+      {selectedDate && (
         <>
-          <Text style={styles.label}>Available Times:</Text>
-          <FlatList
-            data={slotsByDate[selectedDate]}
-            horizontal
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={{ gap: 10, marginBottom: 20 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => setSelectedTime(item)}
-                style={[
-                  styles.slot,
-                  selectedTime === item && styles.selectedSlot,
-                ]}
-              >
-                <Text style={{ color: selectedTime === item ? 'white' : 'black' }}>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
+          <Text style={[styles.label, { color: themeStyles.text }]}>
+            Available Times for {selectedDate}:
+          </Text>
+
+          {slotsByDate[selectedDate]?.length ? (
+            <FlatList
+              data={slotsByDate[selectedDate]}
+              horizontal
+              keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={{ gap: 10, marginBottom: 20 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => setSelectedTime(item)}
+                  style={[
+                    styles.slot,
+                    {
+                      backgroundColor: selectedTime === item
+                        ? themeStyles.primary
+                        : themeStyles.card,
+                      borderColor: themeStyles.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color: selectedTime === item ? '#fff' : themeStyles.text,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          ) : (
+            <Text style={{ color: themeStyles.icon, marginBottom: 20 }}>
+              No available slots for selected date.
+            </Text>
+          )}
         </>
       )}
 
-      <Text style={styles.label}>Reason for Appointment:</Text>
+      <Text style={[styles.label, { color: themeStyles.text }]}>Reason for Appointment:</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, {
+          borderColor: themeStyles.border,
+          color: themeStyles.text,
+        }]}
         value={reason}
         onChangeText={setReason}
-        placeholder="E.g., headache, tooth pain..."
+        placeholder="e.g., headache, general consultation"
+        placeholderTextColor={themeStyles.icon}
         multiline
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleBook} disabled={loading}>
-        <Text style={styles.buttonText}>Book</Text>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: themeStyles.primary }]}
+        onPress={handleBook}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>Confirm Appointment</Text>
       </TouchableOpacity>
     </View>
   );
@@ -120,33 +176,45 @@ const BookAppointment = () => {
 export default BookAppointment;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-  label: { fontSize: 16, marginBottom: 10 },
+  container: {
+    flex: 1,
+    padding: 15,
+  },
+  calendar: {
+    marginBottom: 20,
+    borderRadius: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 10,
+    padding: 12,
     height: 80,
-    borderColor: '#ccc',
-    marginBottom: 20,
     textAlignVertical: 'top',
+    marginBottom: 20,
   },
   slot: {
-    padding: 10,
+    padding: 12,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: '#2196F3',
-  },
-  selectedSlot: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
   },
   button: {
-    backgroundColor: '#2196F3',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginTop: 10,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
