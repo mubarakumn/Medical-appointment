@@ -121,7 +121,7 @@ const HomeScreen = () => {
                 />
             </View>
 
-            {/* List of Doctors */}
+            {/* Doctors */}
             {doctors.length === 0 ? (
                 <Text style={[styles.subtitle, { color: themeStyles.text }]}>No doctors available</Text>
             ) : (
@@ -129,12 +129,12 @@ const HomeScreen = () => {
                     <Text style={[styles.subtitle, { color: themeStyles.text }]}>Doctors</Text>
                     <FlatList
                         data={doctors}
+                        initialNumToRender={5}
                         keyExtractor={(item) => item._id}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
                             <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.background, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
                                 <Image source={{ uri: item.image || 'https://avatar.iran.liara.run/public' }} style={styles.DoctorCardImg} />
-                                <View style={styles.DoctorCardDetails}>
                                     <View style={styles.DoctorCardDetails}>
                                         <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
                                         <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
@@ -144,7 +144,6 @@ const HomeScreen = () => {
                                         </View>
                                         {/* <Text style={[styles.DoctorCardText, { color: themeStyles.text }]}>View Profile</Text> */}
                                     </View>
-                                </View>
                             </TouchableOpacity>
                         )}
                     />
@@ -177,10 +176,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f6f6f6',
         overflow: 'hidden',
         borderRadius: 20,
-        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        elevation: 2,
     },
     searchInput: {
         flex: 1,
@@ -216,7 +214,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 10,
         marginRight: 10,
-        boxShadow: '0 0 10px rgba(0, 183, 255, 0.3)',
+        elevation: 2, // Add shadow for Android,
     },
     categoryCardImg: {
         width: 50,
@@ -228,20 +226,19 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     DoctorCard: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        marginBottom: 8,
-        boxShadow: '0 0 2px rgba(0,0,0,0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
+    // elevation: 2, style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
     },
     DoctorCardImg: {
-        width: '40%',
-        height: 100,
-        borderRadius: 5,
-        marginRight: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 15,
     },
     DoctorCardDetails: {
         flex: 1,

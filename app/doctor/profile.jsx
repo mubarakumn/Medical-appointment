@@ -15,12 +15,12 @@ import useTheme from '../../hooks/useTheme';
 import TopBar from '../../components/TopBar';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router'; // Add this
+import { useRouter } from 'expo-router';
 
 const DoctorProfileScreen = () => {
   const { userDetails, logout } = useContext(AuthContext);
   const { themeStyles } = useTheme();
-  const router = useRouter(); // for navigation
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     specialization: userDetails.specialization || '',
@@ -31,7 +31,16 @@ const DoctorProfileScreen = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleUpdate = async () => {
+    if (!formData.specialization || !formData.experience || !formData.phone || !formData.address) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
     setLoading(true);
     const token = await AsyncStorage.getItem('token');
     try {
@@ -55,8 +64,9 @@ const DoctorProfileScreen = () => {
     }
   };
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/Auth/LoginScreen');
   };
 
   if (!userDetails || userDetails.role !== 'doctor') {
@@ -67,23 +77,13 @@ const DoctorProfileScreen = () => {
     );
   }
 
-
-    const handleLogout = async () => {
-      await logout();
-      router.replace('/Auth/LoginScreen'); // Or wherever your login screen is
-    };
-
-
   return (
     <ScrollView style={{ backgroundColor: themeStyles.background }} contentContainerStyle={styles.scrollContainer}>
       <TopBar title="Profile" />
 
       <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
         <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/300?doctor' }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: 'https://i.pravatar.cc/300?doctor' }} style={styles.avatar} />
         </View>
 
         <Text style={[styles.name, { color: themeStyles.text }]}>{userDetails.name}</Text>
@@ -134,13 +134,13 @@ const DoctorProfileScreen = () => {
             <Text style={styles.buttonText}>Update Profile</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity
-  onPress={handleLogout}
-  style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
->
-  <Text style={styles.buttonText}>Logout</Text>
-</TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
+        >
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -166,18 +166,19 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   info: {
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 15,
+    fontSize: 15,
   },
   button: {
     padding: 15,
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   center: {
     flex: 1,

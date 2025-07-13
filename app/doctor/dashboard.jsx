@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
@@ -18,6 +19,8 @@ import { useRouter } from 'expo-router';
 const DoctorDashboard = () => {
   const { userDetails } = useContext(AuthContext);
   const { themeStyles, theme } = useTheme();
+  const router = useRouter();
+
   const [stats, setStats] = useState({
     appointments: 0,
     slots: 0,
@@ -27,11 +30,11 @@ const DoctorDashboard = () => {
     availabilitySummary: [],
   });
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchStats = async () => {
-    const token = await AsyncStorage.getItem('token');
     try {
+      const token = await AsyncStorage.getItem('token');
       const res = await axios.get(
         `https://medical-appointment-backend-five.vercel.app/api/users/doctors/stats`,
         {
@@ -43,6 +46,7 @@ const DoctorDashboard = () => {
       console.error(err.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -50,26 +54,33 @@ const DoctorDashboard = () => {
     fetchStats();
   }, []);
 
-  const handleProfile = () => {
-    router.push('/doctor/profile');
-  };
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchStats();
+  }, []);
 
-  const handleNotification = () => {
-    router.push('/screens/Notifications');
-  };
+  const handleProfile = () => router.push('/doctor/profile');
+  const handleNotification = () => router.push('/screens/Notifications');
 
   const DashboardButton = ({ icon, label, onPress }) => (
     <TouchableOpacity
       style={[styles.actionButton, { backgroundColor: themeStyles.card }]}
       onPress={onPress}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: 18 }}>{icon}</Text>
-        <Text style={[styles.actionText, { color: themeStyles.text, marginLeft: 8 }]}>{label}</Text>
+      <View style={styles.actionContent}>
+        <Text style={styles.actionIcon}>{icon}</Text>
+        <Text style={[styles.actionText, { color: themeStyles.text }]}>{label}</Text>
       </View>
     </TouchableOpacity>
   );
 
+  const StatCard = ({ value, label, icon }) => (
+    <View style={[styles.statCard, { backgroundColor: themeStyles.card }]}>
+      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={[styles.statValue, { color: themeStyles.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: themeStyles.icon }]}>{label}</Text>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -78,32 +89,19 @@ const DoctorDashboard = () => {
       </View>
     );
   }
-  const StatCard = ({ value, label, icon }) => {
-    const { themeStyles } = useTheme();
-    return (
-      <View style={[styles.statCard, { backgroundColor: themeStyles.card }]}>
-        <Text style={styles.statIcon}>{icon}</Text>
-        <Text style={[styles.statValue, { color: themeStyles.text }]}>{value}</Text>
-        <Text style={[styles.statLabel, { color: themeStyles.text }]}>{label}</Text>
-      </View>
-    );
-  };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeStyles.card }]}>
-      <StatusBar
-        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={themeStyles.card}
-      />
+    <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
 
       {/* Top Navbar */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={handleProfile}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={styles.navUser}>
             <FontAwesome5 name="user-circle" size={30} color={themeStyles.text} />
             <View>
-              <Text style={[styles.navText, { color: themeStyles.text }]}>Welcome back!</Text>
-              <Text style={[styles.navText, { fontWeight: 'bold', color: themeStyles.text }]}>
+              <Text style={[styles.navGreeting, { color: themeStyles.text }]}>Welcome back!</Text>
+              <Text style={[styles.navName, { color: themeStyles.text }]}>
                 {userDetails.name || 'Doctor'} 👨‍⚕️
               </Text>
             </View>
@@ -115,7 +113,10 @@ const DoctorDashboard = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.primary} />}
+      >
         <Text style={[styles.title, { color: themeStyles.text }]}>Doctor Dashboard</Text>
 
         {/* Stat Cards */}
@@ -125,26 +126,23 @@ const DoctorDashboard = () => {
           <StatCard value={stats.patients} label="Patients" icon="👥" />
         </View>
 
-
-        {/* Actions */}
+        {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: themeStyles.text }]}>Quick Actions</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <DashboardButton icon="➕" label="Add Slot" onPress={() => router.push('/doctor/availability')} />
             <DashboardButton icon="📅" label="Appointments" onPress={() => router.push('/doctor/appointments')} />
-            {/* <DashboardButton icon="👥" label="Patients" onPress={() => router.push('/doctor/patients')} /> */}
           </ScrollView>
         </View>
 
-
-        {/* 📅 Today’s Appointments */}
+        {/* Today Appointments */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: themeStyles.text }]}>Today's Appointments</Text>
           {stats.todayAppointments.length === 0 ? (
             <Text style={{ color: themeStyles.icon }}>No appointments today.</Text>
           ) : (
             stats.todayAppointments.map((appt, index) => (
-              <View key={index} style={[styles.appointmentCard, { backgroundColor: themeStyles.background }]}>
+              <View key={index} style={[styles.appointmentCard, { backgroundColor: themeStyles.card }]}>
                 <Text style={{ color: themeStyles.text, fontWeight: 'bold' }}>{appt.patientName}</Text>
                 <Text style={{ color: themeStyles.text }}>{new Date(appt.date).toLocaleString()}</Text>
               </View>
@@ -152,7 +150,7 @@ const DoctorDashboard = () => {
           )}
         </View>
 
-        {/* 🔜 Upcoming Appointments */}
+        {/* Upcoming Appointments */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: themeStyles.text }]}>Upcoming Appointments</Text>
           {stats.upcomingAppointments.length === 0 ? (
@@ -166,7 +164,7 @@ const DoctorDashboard = () => {
           )}
         </View>
 
-        {/* 🕒 Availability */}
+        {/* Availability */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: themeStyles.text }]}>Availability</Text>
           {stats.availabilitySummary.length === 0 ? (
@@ -179,15 +177,16 @@ const DoctorDashboard = () => {
             ))
           )}
         </View>
-
       </ScrollView>
     </View>
   );
 };
 
+export default DoctorDashboard;
+
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 15 },
-  scrollContainer: { flexGrow: 1, padding: 5 , paddingBottom: 50},
+  container: { flex: 1, paddingHorizontal: 15, paddingTop: 10 },
+  scrollContainer: { paddingBottom: 40 },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -197,87 +196,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
-  },
-  navText: {
-    color: '#000',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
+  },
+  navUser: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  navGreeting: { fontSize: 13 },
+  navName: { fontSize: 16, fontWeight: 'bold' },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
   cardsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10,
-    gap: 10,
+    gap: 12,
   },
   statCard: {
     flex: 1,
-    paddingVertical: 20,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 2,
   },
-
-  statIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-
-  statLabel: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
-  },
-  card: {
-    padding: 12,
-    borderRadius: 15,
-    alignItems: 'center',
-    elevation: 4,
-    width: '30%', // or use Dimensions to calculate 33%
-    minWidth: 100,
-    backgroundColor: '#fff',
-  },
+  statIcon: { fontSize: 22, marginBottom: 6 },
+  statValue: { fontSize: 22, fontWeight: 'bold' },
+  statLabel: { fontSize: 13, marginTop: 4 },
   section: {
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 25,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    marginRight: 10,
-    elevation: 2,
-    minWidth: 140,
+    marginRight: 12,
+    elevation: 1,
   },
-  actionText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  actionContent: { flexDirection: 'row', alignItems: 'center' },
+  actionIcon: { fontSize: 18 },
+  actionText: { fontSize: 15, marginLeft: 6, fontWeight: '500' },
   appointmentCard: {
     padding: 12,
     marginBottom: 10,
     borderRadius: 10,
-    elevation: 2,
+    elevation: 1,
   },
-
 });
-
-export default DoctorDashboard;

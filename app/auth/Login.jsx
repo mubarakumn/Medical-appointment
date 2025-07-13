@@ -15,6 +15,8 @@ const Login = () => {
   const { themeStyles, theme } = useTheme(); // Destructure themeStyles from useTheme
   const { login, setUserDetails } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+  const [focusedInput, setFocusedInput] = useState('');
+
 
 
   const navigation = useRouter();
@@ -45,22 +47,41 @@ const Login = () => {
        <StatusBar barStyle={theme === 'dark' ? 'light-content' :'dark-content'} backgroundColor={themeStyles.background}  />
       <Text style={[styles.title, { color: themeStyles.text }]}>Login</Text>
       <TextInput
-        style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: themeStyles.card,
+            color: themeStyles.text,
+            borderColor: focusedInput === 'email' ? themeStyles.primary : themeStyles.border,
+          },
+        ]}
         placeholder="Email"
-        placeholderTextColor={themeStyles.icon}
+        placeholderTextColor={themeStyles.tint}
         value={email}
         onChangeText={setEmail}
+        onFocus={() => setFocusedInput('email')}
+        onBlur={() => setFocusedInput('')}
         keyboardType="email-address"
         autoCapitalize="none"
       />
       <TextInput
-        style={[styles.input, { backgroundColor: themeStyles.card, color: themeStyles.text }]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: themeStyles.card,
+            color: themeStyles.text,
+            borderColor: focusedInput === 'password' ? themeStyles.primary : themeStyles.border,
+          },
+        ]}
         placeholder="Password"
-        placeholderTextColor={themeStyles.icon}
+        placeholderTextColor={themeStyles.tint}
         value={password}
         onChangeText={setPassword}
+        onFocus={() => setFocusedInput('password')}
+        onBlur={() => setFocusedInput('')}
         secureTextEntry
       />
+
       <TouchableOpacity disabled={loading} style={[styles.button, { backgroundColor: themeStyles.text }]} onPress={handleLogin}>
         {loading
           ? <ActivityIndicator color={themeStyles.background} />
@@ -91,6 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 20,
+    borderWidth: 1,
   },
   button: {
     width: '100%',

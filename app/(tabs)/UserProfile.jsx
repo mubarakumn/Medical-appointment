@@ -1,79 +1,87 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import React, { useContext } from 'react'
-import useTheme from '../../hooks/useTheme'
-import { useRouter } from 'expo-router'
-import { FontAwesome, MaterialCommunityIcons, MaterialIcons, SimpleLineIcons } from '@expo/vector-icons'
-// import MyButton from '../../components/myButton'
-import { AuthContext } from '../../context/AuthContext'
-import TopBar from '../../components/TopBar'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useContext } from 'react';
+import useTheme from '../../hooks/useTheme';
+import { useRouter } from 'expo-router';
+import {
+  FontAwesome,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  SimpleLineIcons,
+} from '@expo/vector-icons';
+import { AuthContext } from '../../context/AuthContext';
+import TopBar from '../../components/TopBar';
 
 const UserProfile = () => {
-  const { themeStyles } = useTheme()
+  const { themeStyles } = useTheme();
   const { logout, userDetails } = useContext(AuthContext);
-  const navigation = useRouter()
+  const navigation = useRouter();
 
-  const handleGoback = () => {
-    navigation.navigate('/')
-  }
-
-  // Navigate to the menu screen
   const handleNotification = () => {
     navigation.navigate('screens/Notifications');
-  }
+  };
 
-  // Handle edit profile
   const handleEditProfile = () => {
-  }
+    // navigation.push('EditProfile'); // Uncomment when implemented
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-      <TopBar
-        title={'Profile'}
-      />
+      <TopBar title="Profile" />
 
+      {/* User Info */}
       <View style={styles.userDetail}>
-        <Image source={{ uri: 'https://www.pngmart.com/files/23/Profile-PNG-Photo.png' }} style={styles.image} />
+        <Image
+          source={{
+            uri: userDetails?.image || 'https://www.pngmart.com/files/23/Profile-PNG-Photo.png',
+          }}
+          style={styles.image}
+        />
         <View style={styles.details}>
-          <Text style={{ color: themeStyles.text, fontWeight: 'bold', textAlign: 'center' }}>{userDetails.name}</Text>
-          <Text style={{ color: themeStyles.text, textAlign: 'center' }}>{userDetails.email}</Text>
+          <Text style={[styles.name, { color: themeStyles.text }]}>
+            {userDetails?.name || 'Guest User'}
+          </Text>
+          <Text style={[styles.email, { color: themeStyles.text }]}>
+            {userDetails?.email || 'user@example.com'}
+          </Text>
         </View>
       </View>
 
+      {/* Menu Options */}
       <View style={styles.menusContainer}>
+        {/* Edit Profile */}
         <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={handleEditProfile}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* icon */}
+          <View style={styles.menuLeft}>
             <MaterialCommunityIcons name="account-edit-outline" size={24} color={themeStyles.text} />
-            {/* text */}
-            <Text style={{ color: themeStyles.text }} >Edit profile</Text>
+            <Text style={[styles.menuText, { color: themeStyles.text }]}>Edit Profile</Text>
           </View>
-          {/* icon */}
           <FontAwesome name="angle-right" size={24} color={themeStyles.text} />
         </TouchableOpacity>
+
+        {/* Notifications */}
         <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={handleNotification}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* icon */}
+          <View style={styles.menuLeft}>
             <MaterialIcons name="notifications" size={24} color={themeStyles.text} />
-            {/* text */}
-            <Text style={{ color: themeStyles.text }} >Notifications</Text>
+            <Text style={[styles.menuText, { color: themeStyles.text }]}>Notifications</Text>
           </View>
-          {/* icon */}
           <FontAwesome name="angle-right" size={24} color={themeStyles.text} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={() => logout()}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* icon */}
+
+        {/* Logout */}
+        <TouchableOpacity style={[styles.menu, { borderColor: themeStyles.border }]} onPress={logout}>
+          <View style={styles.menuLeft}>
             <SimpleLineIcons name="logout" size={24} color={themeStyles.text} />
-            {/* text */}
-            <Text style={{ color: themeStyles.text }} >Log Out</Text>
+            <Text style={[styles.menuText, { color: themeStyles.text }]}>Log Out</Text>
           </View>
-          {/* icon */}
-          {/* <FontAwesome name="angle-right" size={24} color={themeStyles.text}  /> */}
         </TouchableOpacity>
       </View>
-      {/* <MyButton title="Edit Profile" onPress={()=>navigation.navigate('EditProfile')} /> */}
+
+      {/* Optional Footer Info */}
+      <Text style={{ textAlign: 'center', color: themeStyles.icon, marginTop: 40 }}>
+        Version 1.0.0
+      </Text>
     </View>
-  )
-}
+  );
+};
 
 export default UserProfile;
 
@@ -83,25 +91,43 @@ const styles = StyleSheet.create({
   },
   userDetail: {
     marginBottom: 20,
-  },
-  details: {
-    flexDirection: 'column'
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   image: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignSelf: 'center',
-    marginVertical: 20,
+    marginBottom: 10,
+  },
+  details: {
+    alignItems: 'center',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  email: {
+    fontSize: 14,
   },
   menusContainer: {
-    padding: 15,
-    flexDirection: 'column',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   menu: {
-    padding: 10,
+    paddingVertical: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     borderBottomWidth: 1,
   },
-})
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});

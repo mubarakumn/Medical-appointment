@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,16 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { AuthContext } from '../../context/AuthContext';
-import useTheme from '../../hooks/useTheme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import TopBar from '../../components/TopBar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import useTheme from '../../hooks/useTheme';
 
 const AppointmentHistory = () => {
   const { themeStyles } = useTheme();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch appointments
   const fetchAppointments = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -39,9 +37,8 @@ const AppointmentHistory = () => {
     }
   };
 
-  // Cancel appointment
   const handleCancel = (appointmentId) => {
-    Alert.alert('Cancel Appointment', 'Are you sure?', [
+    Alert.alert('Cancel Appointment', 'Are you sure you want to cancel this appointment?', [
       { text: 'No' },
       {
         text: 'Yes',
@@ -58,7 +55,7 @@ const AppointmentHistory = () => {
               }
             );
             Alert.alert('Success', 'Appointment cancelled successfully.');
-            fetchAppointments(); // Refresh
+            fetchAppointments(); // Refresh list
           } catch (err) {
             Alert.alert('Error', 'Could not cancel appointment.');
           }
@@ -71,7 +68,6 @@ const AppointmentHistory = () => {
     fetchAppointments();
   }, []);
 
-  // Each appointment item
   const renderItem = ({ item }) => {
     const appointmentDate = new Date(item.date);
     const isUpcoming = appointmentDate > new Date();
@@ -82,16 +78,29 @@ const AppointmentHistory = () => {
           <Text style={[styles.doctorName, { color: themeStyles.text }]}>
             {item.doctor?.name || 'Doctor'}
           </Text>
-          <Text style={[styles.status, { color: item.status === 'cancelled' ? 'red' : '#2196F3' }]}>
+          <Text
+            style={[
+              styles.status,
+              {
+                color:
+                  item.status === 'cancelled'
+                    ? 'red'
+                    : item.status === 'confirmed'
+                    ? 'green'
+                    : '#2196F3',
+              },
+            ]}
+          >
             {item.status.toUpperCase()}
           </Text>
         </View>
         <Text style={[styles.text, { color: themeStyles.icon }]}>
-          Specialization: {item.doctor?.specialization}
+          Specialization: {item.doctor?.specialization || 'N/A'}
         </Text>
         <Text style={[styles.text, { color: themeStyles.icon }]}>
           Date: {appointmentDate.toLocaleString()}
         </Text>
+
         {isUpcoming && item.status === 'pending' && (
           <TouchableOpacity onPress={() => handleCancel(item._id)}>
             <Text style={[styles.cancelText, { color: 'red' }]}>Cancel Appointment</Text>
@@ -105,7 +114,7 @@ const AppointmentHistory = () => {
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
       <TopBar title="Appointment History" />
       {loading ? (
-        <ActivityIndicator size="large" color={themeStyles.primary} />
+        <ActivityIndicator size="large" color={themeStyles.primary} style={{ marginTop: 40 }} />
       ) : appointments.length === 0 ? (
         <Text style={[styles.emptyText, { color: themeStyles.text }]}>
           No appointment records found.
@@ -152,8 +161,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   status: {
-    fontWeight: 'bold',
     fontSize: 14,
+    fontWeight: 'bold',
   },
   cancelText: {
     marginTop: 10,
@@ -166,4 +175,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

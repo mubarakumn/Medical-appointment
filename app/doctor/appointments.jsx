@@ -1,13 +1,21 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  StatusBar,
+  RefreshControl,
+} from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import MyButton from '../../components/MyButton';
 import useTheme from '../../hooks/useTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TopBar from '../../components/TopBar'
-
-
+import TopBar from '../../components/TopBar';
 
 const DoctorAppointmentsScreen = () => {
   const { userDetails } = useContext(AuthContext);
@@ -15,14 +23,12 @@ const DoctorAppointmentsScreen = () => {
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
 
-  
-  
   const fetchAppointments = async () => {
     const token = await AsyncStorage.getItem('token');
     try {
-      setLoading(true);
       const res = await axios.get(
         `https://medical-appointment-backend-five.vercel.app/api/appointments/my?status=${statusFilter}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -32,17 +38,24 @@ const DoctorAppointmentsScreen = () => {
       Alert.alert('Error', 'Failed to load appointments');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
+    setLoading(true);
+    fetchAppointments();
+  }, [statusFilter]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     fetchAppointments();
   }, [statusFilter]);
 
   const updateStatus = async (id, status) => {
     const token = await AsyncStorage.getItem('token');
     try {
-      const res = await axios.patch(
+      await axios.patch(
         `https://medical-appointment-backend-five.vercel.app/api/appointments/update/${id}`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -69,7 +82,6 @@ const DoctorAppointmentsScreen = () => {
 
   const renderItem = ({ item }) => (
     <View style={[styles.card, { backgroundColor: themeStyles.card }]}>
-
       <Text style={[styles.text, { color: themeStyles.text }]}>
         🧑 Patient: {item.patient?.name}
       </Text>
@@ -82,7 +94,6 @@ const DoctorAppointmentsScreen = () => {
       <Text style={[styles.text, { color: themeStyles.text }]}>
         📝 Reason: {item.reason}
       </Text>
-
       {item.notes && (
         <Text style={[styles.text, { color: themeStyles.text }]}>
           📋 Notes: {item.notes}
@@ -107,11 +118,11 @@ const DoctorAppointmentsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-            <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.card} />
-
-      <TopBar 
-      title={"Appointments"}
+      <StatusBar
+        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={themeStyles.card}
       />
+      <TopBar title="Appointments" />
       <Text style={[styles.title, { color: themeStyles.text }]}>Your Appointments</Text>
 
       <View style={styles.filterRow}>
@@ -121,7 +132,10 @@ const DoctorAppointmentsScreen = () => {
             onPress={() => setStatusFilter(s)}
             style={[
               styles.filterBtn,
-              statusFilter === s && { backgroundColor: themeStyles.primary },
+              {
+                borderColor: themeStyles.border,
+                backgroundColor: statusFilter === s ? themeStyles.primary : 'transparent',
+              },
             ]}
           >
             <Text
@@ -144,6 +158,13 @@ const DoctorAppointmentsScreen = () => {
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={themeStyles.primary}
+            />
+          }
         />
       )}
     </View>
@@ -157,26 +178,36 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
-    shadowColor: '#ccc',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  text: { marginBottom: 5 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  cancel: { color: 'red', marginTop: 5 },
+  text: { marginBottom: 5, fontSize: 14 },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  cancel: {
+    color: 'red',
+    fontWeight: '600',
+    marginTop: 10,
+    paddingHorizontal: 8,
+  },
   filterRow: {
     flexDirection: 'row',
-    marginBottom: 10,
     flexWrap: 'wrap',
-    gap: 5,
+    gap: 8,
+    marginBottom: 12,
   },
   filterBtn: {
-    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    marginRight: 8,
   },
 });
 

@@ -1,39 +1,62 @@
+import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import useTheme from '../../hooks/useTheme'; // adjust path if necessary
 
 export default function DoctorLayout() {
+  const { themeStyles } = useTheme();
+
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: '#2196F3' }}>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: themeStyles.primary,
+        tabBarInactiveTintColor: themeStyles.icon,
+        tabBarStyle: {
+          backgroundColor: themeStyles.card,
+          borderTopColor: themeStyles.border,
+          height: 60,
+          paddingBottom: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+        headerShown: false,
+      }}
+    >
       <Tabs.Screen
         name="dashboard"
         options={{
-          headerShown: false,
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Ionicons name="analytics-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="analytics-outline" color={color} size={size} />
+          ),
         }}
-        />
+      />
       <Tabs.Screen
         name="appointments"
         options={{
-          headerShown: false,
           title: 'Appointments',
-          tabBarIcon: ({ color, size }) => <Ionicons name="clipboard-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="clipboard-outline" color={color} size={size} />
+          ),
         }}
-        />
+      />
       <Tabs.Screen
         name="availability"
         options={{
-          headerShown: false,
           title: 'Availability',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" color={color} size={size} />
+          ),
         }}
-        />
+      />
       <Tabs.Screen
         name="profile"
         options={{
-          headerShown: false,
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-circle-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-circle-outline" color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
