@@ -21,10 +21,10 @@ export default function DoctorLayout() {
         }}
         />
       <Tabs.Screen
-        name="slots"
+        name="availability"
         options={{
           headerShown: false,
-          title: 'Slots',
+          title: 'Availability',
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" color={color} size={size} />,
         }}
         />

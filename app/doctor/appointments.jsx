@@ -40,6 +40,7 @@ const DoctorAppointmentsScreen = () => {
   }, [statusFilter]);
 
   const updateStatus = async (id, status) => {
+    const token = await AsyncStorage.getItem('token');
     try {
       const res = await axios.patch(
         `https://medical-appointment-backend-five.vercel.app/api/appointments/update/${id}`,
@@ -53,6 +54,7 @@ const DoctorAppointmentsScreen = () => {
   };
 
   const cancelAppointment = async (id) => {
+    const token = await AsyncStorage.getItem('token');
     try {
       await axios.patch(
         `https://medical-appointment-backend-five.vercel.app/api/appointments/cancel/${id}`,
@@ -81,6 +83,12 @@ const DoctorAppointmentsScreen = () => {
         📝 Reason: {item.reason}
       </Text>
 
+      {item.notes && (
+        <Text style={[styles.text, { color: themeStyles.text }]}>
+          📋 Notes: {item.notes}
+        </Text>
+      )}
+
       <View style={styles.actions}>
         {item.status === 'pending' && (
           <MyButton title="Confirm" onPress={() => updateStatus(item._id, 'confirmed')} />
@@ -88,7 +96,7 @@ const DoctorAppointmentsScreen = () => {
         {item.status === 'confirmed' && (
           <MyButton title="Mark Completed" onPress={() => updateStatus(item._id, 'completed')} />
         )}
-        {item.status !== 'cancelled' && (
+        {['pending', 'confirmed'].includes(item.status) && (
           <TouchableOpacity onPress={() => cancelAppointment(item._id)}>
             <Text style={styles.cancel}>❌ Cancel</Text>
           </TouchableOpacity>
@@ -116,7 +124,14 @@ const DoctorAppointmentsScreen = () => {
               statusFilter === s && { backgroundColor: themeStyles.primary },
             ]}
           >
-            <Text style={{ color: themeStyles.text }}>{s || 'All'}</Text>
+            <Text
+              style={{
+                color: statusFilter === s ? '#fff' : themeStyles.text,
+                fontWeight: statusFilter === s ? 'bold' : 'normal',
+              }}
+            >
+              {s || 'All'}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>

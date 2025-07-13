@@ -122,31 +122,33 @@ const HomeScreen = () => {
             </View>
 
             {/* List of Doctors */}
-            <Text style={[styles.subtitle, { color: themeStyles.text }]}>List of Doctors</Text>
             {doctors.length === 0 ? (
-                <Text style={[styles.subtitle, { color: themeStyles.text }]}>No Doctors Available</Text>
+                <Text style={[styles.subtitle, { color: themeStyles.text }]}>No doctors available</Text>
             ) : (
-                <FlatList
-                    data={doctors}
-                    keyExtractor={(item) => item._id}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.background, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
-                            <Image source={{ uri: item.image || 'https://avatar.iran.liara.run/public' }} style={styles.DoctorCardImg} />
-                            <View style={styles.DoctorCardDetails}>
+                <>
+                    <Text style={[styles.subtitle, { color: themeStyles.text }]}>Doctors</Text>
+                    <FlatList
+                        data={doctors}
+                        keyExtractor={(item) => item._id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.background, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
+                                <Image source={{ uri: item.image || 'https://avatar.iran.liara.run/public' }} style={styles.DoctorCardImg} />
                                 <View style={styles.DoctorCardDetails}>
-                                    <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
-                                    <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
-                                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'start', alignItems: 'center' }}>
-                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.gender} .</Text>
-                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}> {item.experience} years</Text>
+                                    <View style={styles.DoctorCardDetails}>
+                                        <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
+                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
+                                        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'start', alignItems: 'center' }}>
+                                            <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.gender} .</Text>
+                                            <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}> {item.experience} years</Text>
+                                        </View>
+                                        {/* <Text style={[styles.DoctorCardText, { color: themeStyles.text }]}>View Profile</Text> */}
                                     </View>
-                                    {/* <Text style={[styles.DoctorCardText, { color: themeStyles.text }]}>View Profile</Text> */}
                                 </View>
-                            </View>
-                        </TouchableOpacity>
-                    )}
-                />
+                            </TouchableOpacity>
+                        )}
+                    />
+                </>
             )}
         </View>
     );

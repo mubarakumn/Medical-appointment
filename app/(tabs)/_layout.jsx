@@ -8,19 +8,19 @@ const _layout = () => {
       screenOptions={{
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: 'white',
-          position: 'absolute',
-          bottom: 20,
-          marginHorizontal: 20,
-          height: 60,
-          borderRadius: 10,
-          shadowColor: '#000',
-          shadowOpacity: 0.06,
-          shadowOffset: {
-            width: 10,
-            height: 10,
-          },
-          paddingHorizontal: 20,
+          // backgroundColor: 'white',
+          // position: 'absolute',
+          // bottom: 20,
+          // marginHorizontal: 20,
+          // height: 60,
+          // borderRadius: 10,
+          // shadowColor: '#000',
+          // shadowOpacity: 0.06,
+          // shadowOffset: {
+          //   width: 10,
+          //   height: 10,
+          // },
+          // paddingHorizontal: 20,
         },
       }}
     >

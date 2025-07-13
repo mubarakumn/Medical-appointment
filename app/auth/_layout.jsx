@@ -7,7 +7,6 @@ const _layout = () => {
     <Stack initialRouteName='Login' >
         <Stack.Screen name='Login' options={{ headerShown: false }} />
         <Stack.Screen name='Signup' options={{ headerShown: false }} />
-        <Stack.Screen name='AdditionalDetails' options={{ headerShown: false }} />
     </Stack>
   )
 }

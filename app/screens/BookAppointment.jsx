@@ -1,77 +1,70 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Calendar } from 'react-native-calendars';
 
 const BookAppointment = () => {
-  const { doctorId } = useLocalSearchParams(); // doctorId passed from doctor list or profile
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [reason, setReason] = useState('');
+  const { doctorId } = useLocalSearchParams();
   const router = useRouter();
 
-  const fetchSlots = async () => {
+  const [slotsByDate, setSlotsByDate] = useState({});
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const fetchCalendarSlots = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`https://medical-appointment-backend-five.vercel.app/api/slots/${doctorId}`);
-      setSlots(res.data.slots || []);
+      const res = await axios.get(`https://medical-appointment-backend-five.vercel.app/api/slots/calendar/${doctorId}`);
+      setSlotsByDate(res.data || {});
     } catch (err) {
-      Alert.alert('Error', 'Failed to load slots');
+      Alert.alert('Error', 'Could not load available dates');
     } finally {
       setLoading(false);
     }
   };
 
-  const bookAppointment = async () => {
-    if (!selectedSlot || !reason.trim()) {
-      Alert.alert('Error', 'Please select a slot and provide a reason');
+  const markAvailableDates = () => {
+    const marked = {};
+    Object.keys(slotsByDate).forEach(date => {
+      marked[date] = {
+        marked: true,
+        selected: date === selectedDate,
+        selectedColor: '#2196F3',
+      };
+    });
+    return marked;
+  };
+
+  const handleBook = async () => {
+    if (!selectedDate || !selectedTime || !reason.trim()) {
+      Alert.alert('Error', 'Please select date, time, and reason');
       return;
     }
 
-    setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await axios.post(
-        'https://medical-appointment-backend-five.vercel.app/api/appointments/book',
+      await axios.post(
+        `https://medical-appointment-backend-five.vercel.app/api/appointments/book`,
         {
           doctorId,
-          date: selectedSlot,
+          date: `${selectedDate}T${selectedTime}:00`, // ISO format
           reason,
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      Alert.alert('Success', 'Appointment booked successfully', [
-        { text: 'OK', onPress: () => router.replace('/') },
-      ]);
+      Alert.alert('Success', 'Appointment booked', [{ text: 'OK', onPress: () => router.replace('/') }]);
     } catch (err) {
       Alert.alert('Error', err.response?.data?.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (doctorId) fetchSlots();
+    if (doctorId) fetchCalendarSlots();
   }, [doctorId]);
-
-  const renderSlot = ({ item }) => {
-    const isSelected = selectedSlot === item.date;
-    const slotTime = new Date(item.date).toLocaleString();
-
-    return (
-      <TouchableOpacity
-        onPress={() => setSelectedSlot(item.date)}
-        style={[styles.slot, isSelected && styles.selectedSlot]}
-      >
-        <Text style={{ color: isSelected ? 'white' : 'black' }}>{slotTime}</Text>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -79,42 +72,63 @@ const BookAppointment = () => {
 
       {loading && <ActivityIndicator size="large" color="#2196F3" />}
 
-      <Text style={styles.label}>Select Slot:</Text>
-      <FlatList
-        data={slots}
-        renderItem={renderSlot}
-        keyExtractor={(item, index) => index.toString()}
-        horizontal
-        contentContainerStyle={{ gap: 10 }}
+      <Calendar
+        markedDates={markAvailableDates()}
+        onDayPress={(day) => setSelectedDate(day.dateString)}
         style={{ marginBottom: 20 }}
       />
+
+      {selectedDate && slotsByDate[selectedDate] && (
+        <>
+          <Text style={styles.label}>Available Times:</Text>
+          <FlatList
+            data={slotsByDate[selectedDate]}
+            horizontal
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={{ gap: 10, marginBottom: 20 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => setSelectedTime(item)}
+                style={[
+                  styles.slot,
+                  selectedTime === item && styles.selectedSlot,
+                ]}
+              >
+                <Text style={{ color: selectedTime === item ? 'white' : 'black' }}>{item}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      )}
 
       <Text style={styles.label}>Reason for Appointment:</Text>
       <TextInput
         style={styles.input}
-        placeholder="E.g., Back pain, fever..."
         value={reason}
         onChangeText={setReason}
+        placeholder="E.g., headache, tooth pain..."
         multiline
       />
 
-      <TouchableOpacity onPress={bookAppointment} style={styles.button} disabled={loading}>
+      <TouchableOpacity style={styles.button} onPress={handleBook} disabled={loading}>
         <Text style={styles.buttonText}>Book</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+export default BookAppointment;
+
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  label: { fontSize: 16, marginBottom: 8 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
+  label: { fontSize: 16, marginBottom: 10 },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
     padding: 10,
-    height: 100,
+    height: 80,
+    borderColor: '#ccc',
     marginBottom: 20,
     textAlignVertical: 'top',
   },
@@ -123,7 +137,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     borderColor: '#2196F3',
-    marginBottom: 10,
   },
   selectedSlot: {
     backgroundColor: '#2196F3',
@@ -132,10 +145,8 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#2196F3',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
   },
-  buttonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#fff', fontWeight: 'bold' },
 });
-
-export default BookAppointment;
