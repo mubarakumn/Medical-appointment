@@ -46,7 +46,7 @@ useEffect(() => {
 const login = async (email, password) => {
   try {
     const res = await axios.post(
-      'https://medical-appointment-backend-five.vercel.app/api/users/login',
+      'http://192.168.43.153:3000/api/users/login',
       { email, password }
     );
 
@@ -91,10 +91,12 @@ const login = async (email, password) => {
   // ✅ LOGOUT
   const logout = async () => {
     await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('user');
     setUserDetails({});
     setIsAuth(false);
     navigation.replace('/auth/Login');
   };
+
 
   return (
     <AuthContext.Provider

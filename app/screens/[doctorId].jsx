@@ -19,9 +19,9 @@ export default function DoctorScreen() {
   }
 
   const handleBookAppointment = (doctorData) => {
-    navigation.navigate({
-      pathname: 'screens/BookAppointment',
-      params: doctorData
+    navigation.push({
+    pathname: '/screens/BookAppointment',
+    params: { doctorId: doctorDetails._id }
     });
   }
 

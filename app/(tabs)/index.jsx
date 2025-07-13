@@ -22,7 +22,7 @@ const HomeScreen = () => {
     
     const router = useRouter();
 
-    // get doctors 
+    // get doctors /
     // http://192.168.43.153:3000
     useEffect(() => {
         const getDoctors = async () => {

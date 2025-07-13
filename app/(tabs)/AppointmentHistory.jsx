@@ -1,68 +1,66 @@
-// import { View, Text, StyleSheet } from 'react-native'
-// import React from 'react'
-// import TopBar from '../../components/TopBar'
-// import useTheme from '../../hooks/useTheme'
-
-// export default function AppointmentHistory() {
-//   const { themeStyles } = useTheme();
-
-//   return (
-//     <View style={[styles.container, { backgroundColor: themeStyles.background}]}>
-//       <TopBar
-//       title={"Appointment History"}
-//       />
-//       <Text>AppointmentHistory</Text>
-//     </View>
-//   )
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 10,
-//   },
-// })
-
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import useTheme from '../../hooks/useTheme';
 import axios from 'axios';
-import MyButton from '../../components/MyButton';
+import TopBar from '../../components/TopBar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PatientAppointmentsScreen = () => {
-  const { user } = useContext(AuthContext);
+const AppointmentHistory = () => {
   const { themeStyles } = useTheme();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch appointments
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(`https://your-backend/api/appointments/my`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      const token = await AsyncStorage.getItem('token');
+      const res = await axios.get(
+        'https://medical-appointment-backend-five.vercel.app/api/appointments/my',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setAppointments(res.data);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to load appointments');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch appointments.');
     } finally {
       setLoading(false);
     }
   };
 
-  const cancelAppointment = async (id) => {
+  // Cancel appointment
+  const handleCancel = (appointmentId) => {
     Alert.alert('Cancel Appointment', 'Are you sure?', [
       { text: 'No' },
       {
         text: 'Yes',
         onPress: async () => {
           try {
-            await axios.put(`https://your-backend/api/appointments/${id}/cancel`, {}, {
-              headers: { Authorization: `Bearer ${user.token}` },
-            });
-            Alert.alert('Cancelled', 'Appointment has been cancelled.');
-            fetchAppointments(); // refresh
+            const token = await AsyncStorage.getItem('token');
+            await axios.put(
+              `https://medical-appointment-backend-five.vercel.app/api/appointments/${appointmentId}/cancel`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            Alert.alert('Success', 'Appointment cancelled successfully.');
+            fetchAppointments(); // Refresh
           } catch (err) {
-            Alert.alert('Error', 'Unable to cancel appointment.');
+            Alert.alert('Error', 'Could not cancel appointment.');
           }
         },
       },
@@ -73,16 +71,29 @@ const PatientAppointmentsScreen = () => {
     fetchAppointments();
   }, []);
 
+  // Each appointment item
   const renderItem = ({ item }) => {
-    const isUpcoming = new Date(item.date) > new Date();
+    const appointmentDate = new Date(item.date);
+    const isUpcoming = appointmentDate > new Date();
+
     return (
       <View style={[styles.card, { backgroundColor: themeStyles.card }]}>
-        <Text style={[styles.title, { color: themeStyles.text }]}>{item.doctor.name}</Text>
-        <Text style={{ color: themeStyles.icon }}>Specialization: {item.doctor.specialization}</Text>
-        <Text style={{ color: themeStyles.icon }}>Date: {new Date(item.date).toLocaleString()}</Text>
-        <Text style={{ color: themeStyles.icon }}>Status: {item.status}</Text>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.doctorName, { color: themeStyles.text }]}>
+            {item.doctor?.name || 'Doctor'}
+          </Text>
+          <Text style={[styles.status, { color: item.status === 'cancelled' ? 'red' : '#2196F3' }]}>
+            {item.status.toUpperCase()}
+          </Text>
+        </View>
+        <Text style={[styles.text, { color: themeStyles.icon }]}>
+          Specialization: {item.doctor?.specialization}
+        </Text>
+        <Text style={[styles.text, { color: themeStyles.icon }]}>
+          Date: {appointmentDate.toLocaleString()}
+        </Text>
         {isUpcoming && item.status === 'pending' && (
-          <TouchableOpacity onPress={() => cancelAppointment(item._id)}>
+          <TouchableOpacity onPress={() => handleCancel(item._id)}>
             <Text style={[styles.cancelText, { color: 'red' }]}>Cancel Appointment</Text>
           </TouchableOpacity>
         )}
@@ -92,35 +103,67 @@ const PatientAppointmentsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-      <Text style={[styles.header, { color: themeStyles.text }]}>My Appointments</Text>
+      <TopBar title="Appointment History" />
       {loading ? (
-        <ActivityIndicator color={themeStyles.primary} size="large" />
+        <ActivityIndicator size="large" color={themeStyles.primary} />
+      ) : appointments.length === 0 ? (
+        <Text style={[styles.emptyText, { color: themeStyles.text }]}>
+          No appointment records found.
+        </Text>
       ) : (
         <FlatList
           data={appointments}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
-          ListEmptyComponent={<Text style={{ color: themeStyles.icon }}>No appointments yet.</Text>}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
     </View>
   );
 };
 
+export default AppointmentHistory;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 15 },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
-  card: {
+  container: {
+    flex: 1,
     padding: 15,
+  },
+  card: {
     borderRadius: 10,
+    padding: 15,
     marginBottom: 15,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  cancelText: { marginTop: 10, fontWeight: 'bold' },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  doctorName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  text: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  status: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  cancelText: {
+    marginTop: 10,
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  emptyText: {
+    fontSize: 16,
+    marginTop: 40,
+    textAlign: 'center',
+  },
 });
 
-export default PatientAppointmentsScreen;

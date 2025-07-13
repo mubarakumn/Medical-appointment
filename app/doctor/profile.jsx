@@ -1,13 +1,63 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useContext, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import useTheme from '../../hooks/useTheme';
-import TopBar from '../../components/TopBar'
-
+import TopBar from '../../components/TopBar';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router'; // Add this
 
 const DoctorProfileScreen = () => {
-  const { userDetails } = useContext(AuthContext); // doctor info
+  const { userDetails, logout } = useContext(AuthContext);
   const { themeStyles } = useTheme();
+  const router = useRouter(); // for navigation
+
+  const [formData, setFormData] = useState({
+    specialization: userDetails.specialization || '',
+    experience: userDetails.experience?.toString() || '',
+    phone: userDetails.phone || '',
+    address: userDetails.address || '',
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdate = async () => {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('token');
+    try {
+      await axios.put(
+        `https://medical-appointment-backend-five.vercel.app/api/users/doctor/update`,
+        {
+          specialization: formData.specialization,
+          experience: parseInt(formData.experience),
+          phone: formData.phone,
+          address: formData.address,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   if (!userDetails || userDetails.role !== 'doctor') {
     return (
@@ -17,11 +67,17 @@ const DoctorProfileScreen = () => {
     );
   }
 
+
+    const handleLogout = async () => {
+      await logout();
+      router.replace('/Auth/LoginScreen'); // Or wherever your login screen is
+    };
+
+
   return (
-    <View >
-      <TopBar 
-      title={"Profile"}
-      />
+    <ScrollView style={{ backgroundColor: themeStyles.background }} contentContainerStyle={styles.scrollContainer}>
+      <TopBar title="Profile" />
+
       <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
         <View style={styles.avatarContainer}>
           <Image
@@ -29,21 +85,74 @@ const DoctorProfileScreen = () => {
             style={styles.avatar}
           />
         </View>
+
         <Text style={[styles.name, { color: themeStyles.text }]}>{userDetails.name}</Text>
         <Text style={[styles.info, { color: themeStyles.icon }]}>Email: {userDetails.email}</Text>
-        <Text style={[styles.info, { color: themeStyles.icon }]}>Specialization: {userDetails.Specialization}</Text>
-        <Text style={[styles.info, { color: themeStyles.icon }]}>Experience: {userDetails.experience} years</Text>
-        <Text style={[styles.info, { color: themeStyles.icon }]}>Phone: {userDetails.phone}</Text>
-        <Text style={[styles.info, { color: themeStyles.icon }]}>Address: {userDetails.address}</Text>
+
+        <TextInput
+          style={[styles.input, { color: themeStyles.text, borderColor: themeStyles.border }]}
+          value={formData.specialization}
+          placeholder="Specialization"
+          placeholderTextColor={themeStyles.icon}
+          onChangeText={(text) => handleChange('specialization', text)}
+        />
+
+        <TextInput
+          style={[styles.input, { color: themeStyles.text, borderColor: themeStyles.border }]}
+          value={formData.experience}
+          placeholder="Experience (in years)"
+          placeholderTextColor={themeStyles.icon}
+          keyboardType="numeric"
+          onChangeText={(text) => handleChange('experience', text)}
+        />
+
+        <TextInput
+          style={[styles.input, { color: themeStyles.text, borderColor: themeStyles.border }]}
+          value={formData.phone}
+          placeholder="Phone Number"
+          placeholderTextColor={themeStyles.icon}
+          keyboardType="phone-pad"
+          onChangeText={(text) => handleChange('phone', text)}
+        />
+
+        <TextInput
+          style={[styles.input, { color: themeStyles.text, borderColor: themeStyles.border }]}
+          value={formData.address}
+          placeholder="Address"
+          placeholderTextColor={themeStyles.icon}
+          onChangeText={(text) => handleChange('address', text)}
+        />
+
+        <TouchableOpacity
+          onPress={handleUpdate}
+          style={[styles.button, { backgroundColor: themeStyles.primary }]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Update Profile</Text>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+  onPress={handleLogout}
+  style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
+>
+  <Text style={styles.buttonText}>Logout</Text>
+</TouchableOpacity>
+
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
   container: {
     padding: 20,
-    flex: 1,
     alignItems: 'center',
   },
   avatarContainer: {
@@ -61,7 +170,24 @@ const styles = StyleSheet.create({
   },
   info: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 10,
+  },
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 15,
+  },
+  button: {
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   center: {
     flex: 1,

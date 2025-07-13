@@ -1,118 +1,228 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import MyButton from '../../components/MyButton';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
 import axios from 'axios';
-import { AuthContext } from '../../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useTheme from '../../hooks/useTheme';
-import TopBar from '../../components/TopBar'
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-
-const AddSlotScreen = () => {
-  const { user } = useContext(AuthContext);
+const DoctorSlotsScreen = () => {
   const { themeStyles } = useTheme();
-
   const [slots, setSlots] = useState([]);
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dateObj, setDateObj] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchSlots = async () => {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('token');
     try {
-      const res = await axios.get(`https://medical-appointment-backend-five.vercel.app/api/slots/${user._id}`);
-      setSlots(res.data.slots);
+      const res = await axios.get(`https://medical-appointment-backend-five.vercel.app/api/slots/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSlots(res.data.slots || []); // your controller returns { slots: [...] }
     } catch (err) {
-      console.log('Error fetching slots:', err);
+      Alert.alert('Error', 'Failed to load slots');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const addSlot = async () => {
+    if (!dateObj) {
+      Alert.alert('Input Required', 'Please select a date and time');
+      return;
+    }
+
+    setSubmitting(true);
+    const token = await AsyncStorage.getItem('token');
+    try {
+      await axios.post(
+        `http://192.168.43.153:3000/api/slots/add`,
+        { slot: dateObj.toISOString() },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchSlots();
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Could not create slot');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const deleteSlot = async (slotDate) => {
+    Alert.alert('Delete Slot', 'Are you sure?', [
+      { text: 'Cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const token = await AsyncStorage.getItem('token');
+          try {
+            await axios.delete(
+              `https://medical-appointment-backend-five.vercel.app/api/slots/remove`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                data: { slot: slotDate }, // backend expects date in body
+              }
+            );
+            fetchSlots();
+          } catch (err) {
+            Alert.alert('Error', err.response?.data?.message || 'Failed to delete slot');
+          }
+        },
+      },
+    ]);
   };
 
   useEffect(() => {
     fetchSlots();
   }, []);
 
-  const handleAddSlot = async () => {
-    try {
-      const res = await axios.post(
-        'https://medical-appointment-backend-five.vercel.app/api/slots/add',
-        { slot: selectedDate },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      setSlots(res.data.slots);
-      Alert.alert('Success', 'Slot added!');
-    } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to add slot');
-    }
-  };
-
-  const handleRemoveSlot = async (slotDate) => {
-    try {
-      const res = await axios.delete(
-        'https://medical-appointment-backend-five.vercel.app/api/slots/remove',
-        {
-          data: { slot: slotDate },
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      setSlots(res.data.slots);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to remove slot');
-    }
-  };
+  const renderSlot = ({ item }) => (
+    <View style={[styles.slotCard, { backgroundColor: themeStyles.card }]}>
+      <View>
+        <Text style={[styles.slotText, { color: themeStyles.text }]}>
+          Date: {new Date(item.date).toDateString()}
+        </Text>
+        <Text style={[styles.slotText, { color: themeStyles.text }]}>
+          Time: {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+      </View>
+      <TouchableOpacity onPress={() => deleteSlot(item.date)}>
+        <Ionicons name="trash-outline" size={24} color="red" />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-      <TopBar 
-      title={"Dashboard"}
-      />
-      <View >
-        <Text style={[styles.title, { color: themeStyles.text }]}>Add Available Slot</Text>
+      <Text style={[styles.title, { color: themeStyles.text }]}>Manage Available Slots</Text>
 
-        <MyButton
-          title="Select Date & Time"
-          onPress={() => setDatePickerVisible(true)}
-        />
+      {/* Slot Picker */}
+      <View style={styles.form}>
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          style={[styles.input, { justifyContent: 'center' }]}
+        >
+          <Text style={{ color: themeStyles.text }}>📅 {dateObj.toDateString()}</Text>
+        </TouchableOpacity>
 
-        <DateTimePickerModal
-          isVisible={datePickerVisible}
-          mode="datetime"
-          onConfirm={(date) => {
-            setSelectedDate(date);
-            setDatePickerVisible(false);
-            handleAddSlot();
-          }}
-          onCancel={() => setDatePickerVisible(false)}
-        />
+        <TouchableOpacity
+          onPress={() => setShowTimePicker(true)}
+          style={[styles.input, { justifyContent: 'center' }]}
+        >
+          <Text style={{ color: themeStyles.text }}>
+            🕒 {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </TouchableOpacity>
 
-        <Text style={[styles.subtitle, { color: themeStyles.text }]}>Current Slots:</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: themeStyles.secondary }]}
+          onPress={addSlot}
+          disabled={submitting}
+        >
+          <Text style={styles.buttonText}>{submitting ? 'Adding...' : '➕ Add Slot'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Slot List */}
+      {loading ? (
+        <ActivityIndicator size="large" color={themeStyles.primary} />
+      ) : (
         <FlatList
           data={slots}
-          keyExtractor={(item) => item.date}
-          renderItem={({ item }) => (
-            <View style={[styles.card, { backgroundColor: themeStyles.card }]}>
-              <Text style={{ color: themeStyles.text }}>{new Date(item.date).toLocaleString()}</Text>
-              <TouchableOpacity onPress={() => handleRemoveSlot(item.date)}>
-                <Text style={{ color: 'red', marginTop: 5 }}>Remove</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderSlot}
+          contentContainerStyle={{ paddingBottom: 30 }}
+          ListEmptyComponent={<Text style={{ color: themeStyles.icon }}>No slots yet.</Text>}
         />
-      </View>
+      )}
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={dateObj}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              const updated = new Date(dateObj);
+              updated.setFullYear(selectedDate.getFullYear());
+              updated.setMonth(selectedDate.getMonth());
+              updated.setDate(selectedDate.getDate());
+              setDateObj(updated);
+            }
+          }}
+        />
+      )}
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={dateObj}
+          mode="time"
+          display="default"
+          onChange={(event, selectedTime) => {
+            setShowTimePicker(false);
+            if (selectedTime) {
+              const updated = new Date(dateObj);
+              updated.setHours(selectedTime.getHours());
+              updated.setMinutes(selectedTime.getMinutes());
+              updated.setSeconds(0);
+              setDateObj(updated);
+            }
+          }}
+        />
+      )}
     </View>
   );
 };
 
+export default DoctorSlotsScreen;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-  subtitle: { fontSize: 18, fontWeight: '600', marginTop: 20, marginBottom: 10 },
-  card: {
+  container: { flex: 1, padding: 15 },
+  title: { fontSize: 22, fontWeight: '600', marginBottom: 20 },
+  form: { marginBottom: 20 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  button: {
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  slotCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
-    shadowColor: '#ccc',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    elevation: 3,
+    elevation: 2,
+  },
+  slotText: {
+    fontSize: 16,
   },
 });
-
-export default AddSlotScreen;
