@@ -66,7 +66,7 @@ const DoctorProfileScreen = () => {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/Auth/LoginScreen');
+    router.replace('../auth/Login');
   };
 
   if (!userDetails || userDetails.role !== 'doctor') {

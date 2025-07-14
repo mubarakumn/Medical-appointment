@@ -21,7 +21,6 @@ export default function Notifications() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data);
-      console.log(res.data)
     } catch (err) {
       console.log(err)
       Alert.alert('Error', 'Failed to load notifications');

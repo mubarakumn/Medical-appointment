@@ -64,7 +64,7 @@ const HomeScreen = () => {
 
 
     const StatCard = ({ value, label, icon }) => (
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: themeStyles.background }]}>
             <Text style={styles.statIcon}>{icon}</Text>
             <Text style={styles.statValue}>{value}</Text>
             <Text style={styles.statLabel}>{label}</Text>
@@ -136,7 +136,7 @@ const HomeScreen = () => {
                 {/* Stat Cards */}
                 <View>
                     {/* <Text style={[styles.subtitle, { color: themeStyles.text }]}>Your Stats</Text> */}
-                    <View style={[styles.cardsRow, { backgroundColor: themeStyles.background }]}>
+                    <View style={styles.cardsRow}>
                         <StatCard value={appointments.length} label="Appointments" icon="📅" />
                         <StatCard value="—" label="Upcoming" icon="🕒" />
                         <StatCard value="—" label="Prescriptions" icon="💊" />
@@ -268,7 +268,6 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#fff',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',

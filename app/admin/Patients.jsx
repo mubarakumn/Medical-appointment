@@ -52,6 +52,7 @@ const Patients = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
       <Text style={[styles.header, { color: themeStyles.text }]}>Patients</Text>
 
       <TextInput
