@@ -18,6 +18,7 @@ const RootLayout = () => {
           <Stack.Screen name="screens/[doctorId]" options={{ headerShown: false }} />
           <Stack.Screen name="screens/BookAppointment" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="admin" options={{ headerShown: false }} />
           <Stack.Screen name="doctor" options={{ headerShown: false }} />
         </Stack>
       </AuthProvider>
