@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await axios.get('https://192.168.43.153:3000/api/admin/stats', {
+      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/admin/stats', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(res.data);
