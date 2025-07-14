@@ -57,13 +57,19 @@ const BookAppointment = () => {
       return;
     }
 
+    // Correct UTC-safe conversion
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const [hour, minute] = selectedTime.split(':').map(Number);
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    const isoString = utcDate.toISOString();
+
     try {
       const token = await AsyncStorage.getItem('token');
       await axios.post(
         `https://medical-appointment-backend-five.vercel.app/api/appointments/book`,
         {
           doctorId,
-          date: `${selectedDate}T${selectedTime}:00`,
+          date: isoString,
           reason,
         },
         { headers: { Authorization: `Bearer ${token}` } }

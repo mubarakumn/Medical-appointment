@@ -19,30 +19,57 @@ const HomeScreen = () => {
     const { themeStyles, theme } = useTheme(); // Destructure themeStyles and theme from useTheme
     const { userDetails } = useContext(AuthContext);
     const [doctors, setDoctors] = useState([]);
-    
+    const [refreshing, setRefreshing] = useState(false);
+    const [appointments, setAppointments] = useState([]);
+
+
     const router = useRouter();
 
     // get doctors /
     // http://192.168.43.153:3000
-    useEffect(() => {
-        const getDoctors = async () => {
-            try {
-                const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/users/doctors');
-                const data = res.data
-                setDoctors(data);
-            } catch (error) {
-                console.log(error.message);
-            }
-        }
-        getDoctors();
 
-        return () => {
-            
-            setDoctors([]);
+    const getDoctors = async () => {
+        try {
+            setRefreshing(true); // Start refresh spinner
+            const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/users/doctors');
+            setDoctors(res.data);
+        } catch (error) {
+            console.log('Error fetching doctors:', error.message);
+        } finally {
+            setRefreshing(false); // Stop refresh spinner
         }
+    };
+
+    useEffect(() => {
+        getDoctors();
     }, [])
 
 
+
+    const fetchAppointments = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/appointments/my', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAppointments(res.data || []);
+        } catch (error) {
+            console.error('Failed to fetch appointments:', error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+
+    const StatCard = ({ value, label, icon }) => (
+        <View style={styles.statCard}>
+            <Text style={styles.statIcon}>{icon}</Text>
+            <Text style={styles.statValue}>{value}</Text>
+            <Text style={styles.statLabel}>{label}</Text>
+        </View>
+    );
 
     // Navigate to the login screen
     const handleProfile = () => {
@@ -103,10 +130,34 @@ const HomeScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Services Or categories */}
-            <View>
-                <Text style={[styles.subtitle, { color: themeStyles.text }]}>Services</Text>
-                {/* Services container */}
+            <View style={{ marginTop: 20 }}>
+                <Text style={[styles.subtitle, { color: themeStyles.text }]}>Your Dashboard</Text>
+
+                {/* Stat Cards */}
+                <View>
+                    {/* <Text style={[styles.subtitle, { color: themeStyles.text }]}>Your Stats</Text> */}
+                    <View style={[styles.cardsRow, { backgroundColor: themeStyles.background }]}>
+                        <StatCard value={appointments.length} label="Appointments" icon="📅" />
+                        <StatCard value="—" label="Upcoming" icon="🕒" />
+                        <StatCard value="—" label="Prescriptions" icon="💊" />
+                    </View>
+                </View>
+
+                {/* View Appointment History */}
+                {/* <TouchableOpacity
+                    style={[styles.dashboardCard, { backgroundColor: themeStyles.secondary, marginTop: 20 }]}
+                    onPress={() => router.push('screens/AppointmentHistory')}
+                >
+                    <Text style={[styles.dashboardCardText, { color: themeStyles.card }]}>
+                        📖 View Appointment History
+                    </Text>
+                </TouchableOpacity> */}
+            </View>
+
+
+            {/* Categories */}
+            {/* <View>
+                <Text style={[styles.subtitle, { color: themeStyles.text }]}>Catergories</Text>
                 <FlatList
                     data={categories}
                     horizontal
@@ -119,7 +170,7 @@ const HomeScreen = () => {
                         </View>
                     )}
                 />
-            </View>
+            </View> */}
 
             {/* Doctors */}
             {doctors.length === 0 ? (
@@ -130,20 +181,22 @@ const HomeScreen = () => {
                     <FlatList
                         data={doctors}
                         initialNumToRender={5}
+                        refreshing={refreshing} // ✅ this controls pull-to-refresh spinner
+                        onRefresh={getDoctors} // ✅ called when pulled
                         keyExtractor={(item) => item._id}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
                             <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.background, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
                                 <Image source={{ uri: item.image || 'https://avatar.iran.liara.run/public' }} style={styles.DoctorCardImg} />
-                                    <View style={styles.DoctorCardDetails}>
-                                        <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
-                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
-                                        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'start', alignItems: 'center' }}>
-                                            <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.gender} .</Text>
-                                            <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}> {item.experience} years</Text>
-                                        </View>
-                                        {/* <Text style={[styles.DoctorCardText, { color: themeStyles.text }]}>View Profile</Text> */}
+                                <View style={styles.DoctorCardDetails}>
+                                    <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
+                                    <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
+                                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'start', alignItems: 'center' }}>
+                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.gender} .</Text>
+                                        <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}> {item.experience} years</Text>
                                     </View>
+                                    {/* <Text style={[styles.DoctorCardText, { color: themeStyles.text }]}>View Profile</Text> */}
+                                </View>
                             </TouchableOpacity>
                         )}
                     />
@@ -208,6 +261,45 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 10,
     },
+    cardsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#fff',
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginHorizontal: 5,
+        elevation: 3,
+    },
+    statIcon: {
+        fontSize: 26,
+    },
+    statValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 5,
+    },
+    statLabel: {
+        fontSize: 14,
+        color: '#777',
+    },
+
+    dashboardCard: {
+        padding: 15,
+        borderRadius: 10,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    dashboardCardText: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        color: '#fff',
+    },
+
     categoryCard: {
         flexDirection: 'column',
         alignItems: 'center',
@@ -226,19 +318,19 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     DoctorCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginBottom: 8,
-    // elevation: 2, style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+        marginBottom: 8,
+        // elevation: 2, style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
     },
     DoctorCardImg: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 15,
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+        marginRight: 15,
     },
     DoctorCardDetails: {
         flex: 1,

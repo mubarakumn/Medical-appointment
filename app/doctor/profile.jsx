@@ -44,8 +44,8 @@ const DoctorProfileScreen = () => {
     setLoading(true);
     const token = await AsyncStorage.getItem('token');
     try {
-      await axios.put(
-        `https://medical-appointment-backend-five.vercel.app/api/users/doctor/update`,
+      await axios.patch(
+        `https://medical-appointment-backend-five.vercel.app/api/users/update`,
         {
           specialization: formData.specialization,
           experience: parseInt(formData.experience),
