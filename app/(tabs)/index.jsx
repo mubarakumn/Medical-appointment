@@ -54,7 +54,7 @@ const HomeScreen = () => {
             });
             setAppointments(res.data || []);
         } catch (error) {
-                 if(err.status === 403) {
+                 if(error.status === 403) {
         router.replace('/auth/Login');
         return;
       }
