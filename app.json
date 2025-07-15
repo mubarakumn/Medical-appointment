@@ -4,7 +4,7 @@
     "slug": "MedicalAppointment",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/bg-logocalender.jpg",
+    "icon": "./assets/images/icon.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/nobg-logocalender.png",
+        "foregroundImage": "./assets/images/foregroundImage.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.almubarak.MedicalAppointment"
@@ -27,7 +27,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/bg-logocalender.jpg",
+          "image": "./assets/images/nobg-logocalender.png",
           "imageWidth": 200,
           "borderRadius": 50,
           "resizeMode": "contain",
