@@ -19,11 +19,29 @@ export default function AdminLayout() {
       }}
     >
       <Tabs.Screen
+        name="Dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="medkit-outline" color={color} size={size} />
+          ),
+        }}
+      />
+        <Tabs.Screen
+          name="Appointments"
+          options={{
+            title: 'Appointments',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="calendar-outline" color={color} size={size} />
+            ),
+          }}
+        />
+      <Tabs.Screen
         name="Doctors"
         options={{
           title: 'Doctors',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medkit-outline" color={color} size={size} />
+            <Ionicons name="people-outline" color={color} size={size} />
           ),
         }}
       />
@@ -37,18 +55,9 @@ export default function AdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="Appointments"
+        name="Profile"
         options={{
-          title: 'Appointments',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="Users"
-        options={{
-          title: 'All Users',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" color={color} size={size} />
           ),

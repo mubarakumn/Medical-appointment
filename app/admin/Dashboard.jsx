@@ -9,14 +9,7 @@ import TopBar from '../../components/TopBar';
 import { AuthContext } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const StatCard = ({ value, label, icon, onPress }) => (
-  <TouchableOpacity style={styles.statCard} onPress={onPress}>
-    <Text style={styles.statIcon}>{icon}</Text>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </TouchableOpacity>
-);
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 
 export default function AdminDashboard() {
   const { themeStyles, theme } = useTheme();
@@ -34,6 +27,7 @@ export default function AdminDashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -43,35 +37,47 @@ export default function AdminDashboard() {
       });
       setStats(res.data);
     } catch (err) {
+      if (err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       console.error('Error fetching admin stats:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => { fetchStats(); }, []);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-        <ActivityIndicator size="large" color={themeStyles.primary} />
-      </View>
-    );
-  }
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchStats();
+  };
 
-  return (
-    <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
-    <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
+  const StatCard = ({ value, label, icon, onPress }) => (
+    <TouchableOpacity style={[styles.statCard, { backgroundColor: themeStyles.card }]} onPress={onPress}>
+      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={[styles.statValue, { color: themeStyles.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: themeStyles.icon }]}>{label}</Text>
+    </TouchableOpacity>
+  );
 
+  const handleNotification = () => {
+    router.push('screens/Notifications');
+  };
+
+  const Header = () => (
+    <View>
       {/* Top Navbar */}
       <View style={styles.nav}>
-        <TouchableOpacity >
+        <TouchableOpacity>
           <View style={styles.navUser}>
             <FontAwesome5 name="user-circle" size={30} color={themeStyles.text} />
             <View>
               <Text style={[styles.navGreeting, { color: themeStyles.text }]}>Welcome back!</Text>
               <Text style={[styles.navName, { color: themeStyles.text }]}>
-                {userDetails.name || 'Doctor'} 👨‍⚕️
+                {userDetails.name || 'Admin'} 👤
               </Text>
             </View>
           </View>
@@ -84,70 +90,56 @@ export default function AdminDashboard() {
 
       {/* Stat Cards */}
       <View style={styles.cardsRow}>
-        <StatCard
-          value={stats.totalUsers}
-          label="Users"
-          icon="👥"
-          onPress={() => router.push('/admin/users')}
-        />
-        <StatCard
-          value={stats.totalDoctors}
-          label="Doctors"
-          icon="🩺"
-          onPress={() => router.push('/admin/doctors')}
-        />
-        <StatCard
-          value={stats.totalPatients}
-          label="Patients"
-          icon="🧍‍♂️"
-          onPress={() => router.push('/admin/patients')}
-        />
+        <StatCard value={stats.totalUsers} label="Users" icon="👥" onPress={() => router.push('/admin/users')} />
+        <StatCard value={stats.totalDoctors} label="Doctors" icon="🩺" onPress={() => router.push('/admin/doctors')} />
+        <StatCard value={stats.totalPatients} label="Patients" icon="🧍‍♂️" onPress={() => router.push('/admin/patients')} />
       </View>
 
       <View style={styles.cardsRow}>
-        <StatCard
-          value={stats.totalAppointments}
-          label="Appointments"
-          icon="📅"
-          onPress={() => router.push('/admin/appointments')}
-        />
-        <StatCard
-          value={stats.pendingAppointments}
-          label="Pending"
-          icon="⏳"
-          onPress={() => router.push('/admin/appointments?status=pending')}
-        />
-        <StatCard
-          value={stats.completedAppointments}
-          label="Completed"
-          icon="✅"
-          onPress={() => router.push('/admin/appointments?status=completed')}
-        />
+        <StatCard value={stats.totalAppointments} label="Appointments" icon="📅" onPress={() => router.push('/admin/appointments')} />
+        <StatCard value={stats.pendingAppointments} label="Pending" icon="⏳" onPress={() => router.push('/admin/appointments?status=pending')} />
+        <StatCard value={stats.completedAppointments} label="Completed" icon="✅" onPress={() => router.push('/admin/appointments?status=completed')} />
       </View>
 
-      {/* Notifications */}
-      <View style={{ marginTop: 30 }}>
-        <Text style={[styles.sectionTitle, { color: themeStyles.text }]}>
-          Latest Notifications
-        </Text>
-        <FlatList
-          data={stats.recentNotifications}
-          keyExtractor={(item) => item._id}
-          ListEmptyComponent={
-            <Text style={{ color: themeStyles.text, opacity: 0.5 }}>No recent notifications</Text>
-          }
-          renderItem={({ item }) => (
-            <View style={[styles.notificationCard, { backgroundColor: themeStyles.card }]}>
-              <Text style={[styles.notifTitle, { color: themeStyles.secondary }]}>
-                {item.title}
-              </Text>
-              <Text style={[styles.notifText, { color: themeStyles.text }]}>
-                {item.text}
-              </Text>
-            </View>
-          )}
-        />
+      {/* Notifications Title */}
+      <Text style={[styles.sectionTitle, { color: themeStyles.text, marginTop: 30 }]}>
+        Latest Notifications
+      </Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+        <ActivityIndicator size="large" color={themeStyles.primary} />
       </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
+
+      <FlatList
+        data={stats.recentNotifications}
+        keyExtractor={(item) => item._id}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        ListHeaderComponent={Header}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        ListEmptyComponent={
+          <Text style={{ color: themeStyles.text, opacity: 0.5, textAlign: 'center' }}>
+            No recent notifications
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <View style={[styles.notificationCard, { backgroundColor: themeStyles.card }]}>
+            <Text style={[styles.notifTitle, { color: themeStyles.secondary }]}>{item.title}</Text>
+            <Text style={[styles.notifText, { color: themeStyles.text }]}>{item.text}</Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -159,6 +151,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 10,
   },
+  nav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  navUser: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  navGreeting: { fontSize: 13 },
+  navName: { fontSize: 16, fontWeight: 'bold' },
   statCard: {
     flex: 1,
     backgroundColor: '#fff',
@@ -175,7 +176,6 @@ const styles = StyleSheet.create({
   statIcon: { fontSize: 26 },
   statValue: { fontSize: 22, fontWeight: 'bold', marginTop: 5 },
   statLabel: { fontSize: 14, color: '#666' },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',

@@ -72,7 +72,7 @@ export default function DoctorScreen() {
         <View style={[styles.detailsContainer, { backgroundColor: themeStyles.card }]}>
           <View style={styles.nameRow}>
             <View style={styles.nameInfo}>
-              <Text style={[styles.name, { color: themeStyles.text }]}>{doctorDetails.name}</Text>
+              <Text style={[styles.name, { color: themeStyles.text }]}>Dr. {doctorDetails.name}</Text>
               <Text style={[styles.specialty, { color: themeStyles.icon }]}>{doctorDetails.specialization}</Text>
             </View>
             <View style={styles.metaInfo}>

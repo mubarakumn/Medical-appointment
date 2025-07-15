@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, FlatList,
-  TouchableOpacity, Alert, StyleSheet
+  TouchableOpacity, Alert, StyleSheet,
+  StatusBar
 } from 'react-native';
 import axios from 'axios';
 import useTheme from '../../hooks/useTheme';
@@ -10,16 +11,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Patients = () => {
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState('');
-  const { themeStyles } = useTheme();
+  const { themeStyles, theme } = useTheme();
 
   const fetchPatients = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/users/patients', {
+      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/admin/patients', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPatients(res.data);
     } catch (err) {
+      if (err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Could not load patients');
     }
   };
@@ -36,7 +41,11 @@ const Patients = () => {
               headers: { Authorization: `Bearer ${token}` }
             });
             fetchPatients(); // Refresh after delete
-          } catch {
+          } catch (err) {
+            if (err.status === 403) {
+              router.replace('/auth/Login');
+              return;
+            }
             Alert.alert('Error', 'Failed to delete patient');
           }
         }

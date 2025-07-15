@@ -57,6 +57,10 @@ const DoctorProfileScreen = () => {
 
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err) {
+        if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       console.error(err);
       Alert.alert('Error', 'Failed to update profile');
     } finally {

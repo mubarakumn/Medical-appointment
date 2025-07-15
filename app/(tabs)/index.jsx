@@ -54,6 +54,10 @@ const HomeScreen = () => {
             });
             setAppointments(res.data || []);
         } catch (error) {
+                 if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
             console.error('Failed to fetch appointments:', error.message);
         }
     };
@@ -64,10 +68,10 @@ const HomeScreen = () => {
 
 
     const StatCard = ({ value, label, icon }) => (
-        <View style={[styles.statCard, { backgroundColor: themeStyles.background }]}>
+        <View style={[styles.statCard, { backgroundColor: themeStyles.card }]}>
             <Text style={styles.statIcon}>{icon}</Text>
-            <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statLabel}>{label}</Text>
+            <Text style={[styles.statValue, { color: themeStyles.text }]}>{value}</Text>
+            <Text style={[styles.statLabel, { color: themeStyles.text }]}>{label}</Text>
         </View>
     );
 
@@ -93,33 +97,33 @@ const HomeScreen = () => {
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: themeStyles.card }]}>
-            <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.card} />
-            {/* User Nav */}
+        <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
+            <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
+            {/* Top Navbar */}
             <View style={styles.nav}>
-                {/* profile nav */}
                 <TouchableOpacity onPress={handleProfile}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <FontAwesome5 name="user-circle" size={30} color={themeStyles.text} />
-                        <View>
-                            <Text style={[styles.navText, { color: themeStyles.text }]}>Welcome back!</Text>
-                            <Text style={[styles.navText, { fontWeight: 'bold', color: themeStyles.text }]}>{userDetails.name || 'Guest'} 🤗 </Text>
-                        </View>
+                <View style={styles.navUser}>
+                    <FontAwesome5 name="user-circle" size={30} color={themeStyles.text} />
+                    <View>
+                        <Text style={[styles.navGreeting, { color: themeStyles.text }]}>Welcome back!</Text>
+                        <Text style={[styles.navName, { color: themeStyles.text }]}>
+                            {userDetails.name || 'Patient'} 👨
+                        </Text>
                     </View>
+                </View>
                 </TouchableOpacity>
 
-                {/* nav icon */}
                 <TouchableOpacity onPress={handleNotification}>
-                    <MaterialIcons name="notifications" size={30} color={themeStyles.text} />
+                <MaterialIcons name="notifications" size={30} color={themeStyles.text} />
                 </TouchableOpacity>
             </View>
 
             {/* search section */}
-            <View style={[styles.searchSection, { backgroundColor: themeStyles.background }]}>
+            <View style={[styles.searchSection, { backgroundColor: themeStyles.card }]}>
                 <TextInput
                     placeholder="Search for a doctor"
                     placeholderTextColor={themeStyles.text}
-                    style={[styles.searchInput, { color: themeStyles.text, backgroundColor: themeStyles.card, placeholder: themeStyles.text }]} />
+                    style={[styles.searchInput, { color: themeStyles.text, backgroundColor: themeStyles.background, placeholder: themeStyles.text }]} />
 
                 <TouchableOpacity
                     onPress={handleSearch}
@@ -139,7 +143,7 @@ const HomeScreen = () => {
                     <View style={styles.cardsRow}>
                         <StatCard value={appointments.length} label="Appointments" icon="📅" />
                         <StatCard value="—" label="Upcoming" icon="🕒" />
-                        <StatCard value="—" label="Prescriptions" icon="💊" />
+                        <StatCard value="—" label="Take more water" icon="🥛" />
                     </View>
                 </View>
 
@@ -186,10 +190,10 @@ const HomeScreen = () => {
                         keyExtractor={(item) => item._id}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
-                            <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.background, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
-                                <Image source={{ uri: item.image || 'https://avatar.iran.liara.run/public' }} style={styles.DoctorCardImg} />
+                            <TouchableOpacity style={[styles.DoctorCard, { backgroundColor: themeStyles.card, borderColor: themeStyles.border }]} onPress={() => handleDoctorProfile(item._id)}>
+                                <Image source={{ uri: item.image || 'https://www.pngmart.com/files/23/Profile-PNG-Photo.png' }} style={styles.DoctorCardImg} />
                                 <View style={styles.DoctorCardDetails}>
-                                    <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>{item.name}</Text>
+                                    <Text style={[styles.DoctorName, { color: themeStyles.secondary }]}>Dr. {item.name}</Text>
                                     <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.specialization}</Text>
                                     <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'start', alignItems: 'center' }}>
                                         <Text style={[styles.DoctorDescription, { color: themeStyles.text }]}>{item.gender} .</Text>
@@ -222,6 +226,14 @@ const styles = StyleSheet.create({
     navText: {
         color: '#000',
     },
+      navUser: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  navGreeting: { fontSize: 13 },
+  navName: { fontSize: 16, fontWeight: 'bold' },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
     searchSection: {
         width: '100%',
         height: 45,

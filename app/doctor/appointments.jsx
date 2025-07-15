@@ -35,6 +35,10 @@ const DoctorAppointmentsScreen = () => {
       );
       setAppointments(res.data);
     } catch (err) {
+        if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Failed to load appointments');
     } finally {
       setLoading(false);
@@ -62,6 +66,10 @@ const DoctorAppointmentsScreen = () => {
       );
       fetchAppointments();
     } catch (err) {
+        if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Failed to update appointment status');
     }
   };
@@ -76,6 +84,10 @@ const DoctorAppointmentsScreen = () => {
       );
       fetchAppointments();
     } catch (err) {
+       if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Failed to cancel appointment');
     }
   };
@@ -120,7 +132,7 @@ const DoctorAppointmentsScreen = () => {
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
       <StatusBar
         barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={themeStyles.card}
+        backgroundColor={themeStyles.background}
       />
       <TopBar title="Appointments" />
       <Text style={[styles.title, { color: themeStyles.text }]}>Your Appointments</Text>

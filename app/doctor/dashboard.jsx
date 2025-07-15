@@ -43,6 +43,10 @@ const DoctorDashboard = () => {
       );
       setStats(res.data);
     } catch (err) {
+      if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       console.error(err.message);
     } finally {
       setLoading(false);
@@ -102,7 +106,7 @@ const DoctorDashboard = () => {
             <View>
               <Text style={[styles.navGreeting, { color: themeStyles.text }]}>Welcome back!</Text>
               <Text style={[styles.navName, { color: themeStyles.text }]}>
-                {userDetails.name || 'Doctor'} 👨‍⚕️
+                Dr. {userDetails.name || 'Doctor'} 👨‍⚕️
               </Text>
             </View>
           </View>

@@ -78,6 +78,10 @@ const BookAppointment = () => {
         { text: 'OK', onPress: () => router.replace('/') },
       ]);
     } catch (err) {
+      if (err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', err.response?.data?.message || 'Something went wrong');
     }
   };

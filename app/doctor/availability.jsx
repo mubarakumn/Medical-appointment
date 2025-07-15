@@ -7,12 +7,14 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import RNPickerSelect from 'react-native-picker-select';
+import { useRouter } from 'expo-router';
 
 const daysOfWeek = [
   { label: 'Monday', value: 'Monday' },
@@ -31,10 +33,12 @@ const durations = [
 ];
 
 const DoctorAvailabilityScreen = () => {
-  const { themeStyles } = useTheme();
+  const { themeStyles, theme } = useTheme();
   const [availability, setAvailability] = useState([]);
   const [pickerVisible, setPickerVisible] = useState({});
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
 
   const addRule = () => {
     setAvailability(prev => [
@@ -82,6 +86,10 @@ const DoctorAvailabilityScreen = () => {
       );
     } catch (err) {
       console.error(err);
+       if(err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Failed to update availability.');
     } finally {
       setLoading(false);
@@ -90,6 +98,8 @@ const DoctorAvailabilityScreen = () => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: themeStyles.background }]}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeStyles.background} />
+
       <Text style={[styles.title, { color: themeStyles.text }]}>Set Your Weekly Availability</Text>
       <Text style={[styles.note, { color: themeStyles.icon }]}>
         Your availability will be applied to the next 14 days. You can come back anytime to update it.
@@ -119,7 +129,9 @@ const DoctorAvailabilityScreen = () => {
           <Text style={[styles.label, { color: themeStyles.text }]}>Start Time:</Text>
           <TouchableOpacity
             onPress={() => setPickerVisible({ index, type: 'start' })}
-            style={styles.timeButton}
+             style={[styles.timeButton,
+          { backgroundColor: themeStyles.background, borderColor: themeStyles.border }
+        ]}
           >
             <Text style={{ color: themeStyles.icon }}>
               {rule.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -129,7 +141,9 @@ const DoctorAvailabilityScreen = () => {
           <Text style={[styles.label, { color: themeStyles.text }]}>End Time:</Text>
           <TouchableOpacity
             onPress={() => setPickerVisible({ index, type: 'end' })}
-            style={styles.timeButton}
+             style={[styles.timeButton,
+              { backgroundColor: themeStyles.background, borderColor: themeStyles.border }
+            ]}
           >
             <Text style={{ color: themeStyles.icon }}>
               {rule.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -164,8 +178,8 @@ const DoctorAvailabilityScreen = () => {
         </View>
       ))}
 
-      <TouchableOpacity style={styles.addButton} onPress={addRule}>
-        <Text style={{ color: '#fff' }}>➕ Add Availability Rule</Text>
+      <TouchableOpacity style={[styles.addButton, {backgroundColor: themeStyles.tint}]} onPress={addRule}>
+        <Text style={{ color: themeStyles.text }}>➕ Add Availability Rule</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -198,7 +212,6 @@ const styles = StyleSheet.create({
   timeButton: {
     paddingVertical: 10,
     paddingHorizontal: 10,
-    backgroundColor: '#eee',
     borderRadius: 8,
     marginTop: 5,
   },
@@ -223,21 +236,21 @@ const styles = StyleSheet.create({
 
 const pickerStyle = (themeStyles) => ({
   inputIOS: {
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: themeStyles.border,
     color: themeStyles.text,
-    backgroundColor: themeStyles.input || '#fff',
+    backgroundColor: themeStyles.background,
     marginBottom: 5,
   },
   inputAndroid: {
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: themeStyles.border,
     color: themeStyles.text,
-    backgroundColor: themeStyles.input || '#fff',
+    backgroundColor: themeStyles.background,
     marginBottom: 5,
   },
 });

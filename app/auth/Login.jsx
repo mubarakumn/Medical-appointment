@@ -19,27 +19,28 @@ const Login = () => {
 
 
 
-  const navigation = useRouter();
+  const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in both fields'); // Use Alert for user feedback
-      return;
-    }
+    router.replace('doctor/availability'); // Navigate to the availability screen directly
+    // if (!email || !password) {
+    //   Alert.alert('Error', 'Please fill in both fields'); // Use Alert for user feedback
+    //   return;
+    // }
     
-    setLoading(true);
-    try {
-      await login(email, password);
-    } catch (err) {
-      Alert.alert('Login failed', err?.response?.data?.message || 'Something went wrong');
-    }finally{
-      setLoading(false);
-    }
+    // setLoading(true);
+    // try {
+    //   await login(email, password);
+    // } catch (err) {
+    //   Alert.alert('Login failed', err?.response?.data?.message || 'Something went wrong');
+    // }finally{
+    //   setLoading(false);
+    // }
      
   };
 
   const handleSignup = () => {
-    navigation.navigate('auth/Signup');
+    router.navigate('auth/Signup');
   };
 
   return (

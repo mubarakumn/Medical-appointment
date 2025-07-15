@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, TextInput, Alert
+  StyleSheet, TextInput, Alert,
+  StatusBar
 } from 'react-native';
 import axios from 'axios';
 import useTheme from '../../hooks/useTheme';
@@ -11,13 +12,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [search, setSearch] = useState('');
-  const { themeStyles } = useTheme();
+  const { themeStyles, theme } = useTheme();
   const router = useRouter();
 
   const fetchDoctors = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/users/doctors', {
+      const res = await axios.get('https://medical-appointment-backend-five.vercel.app/api/admin/doctors', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDoctors(res.data);
@@ -42,6 +43,10 @@ const Doctors = () => {
             });
             fetchDoctors();
           } catch (err) {
+            if (err.status === 403) {
+              router.replace('/auth/Login');
+              return;
+            }
             Alert.alert('Error', 'Failed to delete doctor');
           }
         }
@@ -68,7 +73,7 @@ const Doctors = () => {
         />
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: themeStyles.primary }]}
-          onPress={() => router.push('/Admin/AddDoctor')}
+          onPress={() => router.push('/admin/Doctors')}
         >
           <Text style={styles.addButtonText}>+ Add Doctor</Text>
         </TouchableOpacity>

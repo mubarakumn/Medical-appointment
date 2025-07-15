@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, FlatList,
-  TouchableOpacity, Alert, StyleSheet
+  TouchableOpacity, Alert, StyleSheet,
+  StatusBar
 } from 'react-native';
 import axios from 'axios';
 import useTheme from '../../hooks/useTheme';
@@ -10,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState('');
-  const { themeStyles } = useTheme();
+  const { themeStyles, theme } = useTheme();
 
   const fetchAppointments = async () => {
     try {
@@ -20,6 +21,10 @@ const Appointments = () => {
       });
       setAppointments(res.data);
     } catch (err) {
+      if (err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+      }
       Alert.alert('Error', 'Failed to fetch appointments');
     }
   };
@@ -37,6 +42,10 @@ const Appointments = () => {
             });
             fetchAppointments(); // Refresh
           } catch (err) {
+            if (err.status === 403) {
+              router.replace('/auth/Login');
+              return;
+            }
             Alert.alert('Error', 'Failed to cancel appointment');
           }
         }

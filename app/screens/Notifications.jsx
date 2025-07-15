@@ -23,6 +23,11 @@ export default function Notifications() {
       setNotifications(res.data);
     } catch (err) {
       console.log(err)
+      if (err.status === 403) {
+        router.replace('/auth/Login');
+        return;
+
+      }
       Alert.alert('Error', 'Failed to load notifications');
     } finally {
       setLoading(false);
