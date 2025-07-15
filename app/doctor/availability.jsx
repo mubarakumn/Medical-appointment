@@ -236,22 +236,28 @@ const styles = StyleSheet.create({
 
 const pickerStyle = (themeStyles) => ({
   inputIOS: {
-    padding: 10,
-    borderRadius: 8,
+    height: 50,
+    width: '100%',
+    paddingHorizontal: 15,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: themeStyles.border,
     color: themeStyles.text,
-    backgroundColor: themeStyles.background,
-    marginBottom: 5,
+    backgroundColor: themeStyles.card,
+    fontSize: 16,
+    justifyContent: 'center',
   },
   inputAndroid: {
-    padding: 10,
-    borderRadius: 8,
+    height: 50,
+    width: '100%',
+    paddingHorizontal: 15,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: themeStyles.border,
     color: themeStyles.text,
     backgroundColor: themeStyles.background,
-    marginBottom: 5,
+    fontSize: 16,
+    justifyContent: 'center',
   },
 });
 

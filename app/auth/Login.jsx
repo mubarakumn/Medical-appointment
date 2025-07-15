@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, StatusBar, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import useTheme from '../../hooks/useTheme'; // Import the useTheme hook
 import axios from 'axios';
@@ -45,6 +45,10 @@ const Login = () => {
   return (
     <View style={[styles.container, { backgroundColor: themeStyles.background }]}>
        <StatusBar barStyle={theme === 'dark' ? 'light-content' :'dark-content'} backgroundColor={themeStyles.background}  />
+      <Image
+        source={require('../../assets/images/nobg-logocalender.png')}
+        style={{ width: 150, height: 150, marginBottom: 20, borderRadius: 100 }}
+        />
       <Text style={[styles.title, { color: themeStyles.text }]}>Login</Text>
       <TextInput
         style={[
